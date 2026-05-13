@@ -61,7 +61,7 @@ Use the `gmgn-cli` tool to query K-line data for a token, browse trending tokens
 
 ## Rate Limit Handling
 
-All market routes used by this skill go through GMGN's leaky-bucket limiter with `rate=10` and `capacity=10`. Sustained throughput is roughly `10 ÷ weight` requests/second, and the max burst is roughly `floor(10 ÷ weight)` when the bucket is full.
+All market routes used by this skill go through GMGN's leaky-bucket limiter with `rate=20` and `capacity=20`. Sustained throughput is roughly `20 ÷ weight` requests/second, and the max burst is roughly `floor(20 ÷ weight)` when the bucket is full.
 
 | Command | Route | Weight |
 |---------|-------|--------|

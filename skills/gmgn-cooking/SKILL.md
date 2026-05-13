@@ -74,7 +74,7 @@ If a local `.env` exists but lacks `GMGN_API_KEY` / `GMGN_PRIVATE_KEY`, either a
 
 ## Rate Limit Handling
 
-All cooking routes go through GMGN's leaky-bucket limiter with `rate=10` and `capacity=10`. Sustained throughput is roughly `10 ÷ weight` requests/second.
+All cooking routes go through GMGN's leaky-bucket limiter with `rate=20` and `capacity=20`. Sustained throughput is roughly `20 ÷ weight` requests/second.
 
 | Command | Weight |
 |---------|--------|
