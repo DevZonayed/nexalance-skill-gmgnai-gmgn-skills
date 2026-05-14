@@ -463,7 +463,6 @@ npx gmgn-cli swap \
   [--anti-mev] \
   [--priority-fee <sol>] \
   [--tip-fee <amount>] \
-  [--max-auto-fee <amount>] \
   [--gas-price <gwei>] \
   [--max-fee-per-gas <amount>] \
   [--max-priority-fee-per-gas <amount>] \
@@ -486,7 +485,6 @@ npx gmgn-cli swap \
 | `--anti-mev` | No | Enable anti-MEV protection (default true) |
 | `--priority-fee` | No | Priority fee in SOL (≥ 0.00001 SOL, SOL only) |
 | `--tip-fee` | No | Tip fee (SOL ≥ 0.00001 SOL / BSC ≥ 0.000001 BNB) |
-| `--max-auto-fee` | No | Max automatic fee cap |
 | `--gas-price` | No | Gas price in gwei (BSC ≥ 0.05 gwei / BASE/ETH ≥ 0.01 gwei) |
 | `--max-fee-per-gas` | No | EIP-1559 max fee per gas (Base/ETH only) |
 | `--max-priority-fee-per-gas` | No | EIP-1559 max priority fee per gas (Base/ETH only) |
@@ -540,8 +538,6 @@ gmgn-cli multi-swap \
   [--anti-mev] \
   [--priority-fee <sol>] \
   [--tip-fee <amount>] \
-  [--auto-tip-fee] \
-  [--max-auto-fee <amount>] \
   [--gas-price <gwei>] \
   [--max-fee-per-gas <amount>] \
   [--max-priority-fee-per-gas <amount>] \
@@ -564,8 +560,6 @@ gmgn-cli multi-swap \
 | `--anti-mev` | No | Enable anti-MEV protection |
 | `--priority-fee` | No | Priority fee in SOL (≥ 0.00001, SOL only) |
 | `--tip-fee` | No | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB) |
-| `--auto-tip-fee` | No | Enable automatic tip fee |
-| `--max-auto-fee` | No | Max automatic fee cap |
 | `--gas-price` | No | Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01) |
 | `--max-fee-per-gas` | No | EIP-1559 max fee per gas (Base only) |
 | `--max-priority-fee-per-gas` | No | EIP-1559 max priority fee per gas (Base only) |

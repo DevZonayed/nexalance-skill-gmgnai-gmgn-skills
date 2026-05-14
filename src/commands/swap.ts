@@ -20,10 +20,11 @@ export function registerSwapCommands(program: Command): void {
     .option("--anti-mev", "Enable anti-MEV protection, default true")
     .option("--priority-fee <sol>", "Priority fee in SOL (≥ 0.00001, SOL only)")
     .option("--tip-fee <amount>", "Tip fee (SOL ≥ 0.00001 SOL / BSC ≥ 0.000001 BNB)")
-    .option("--max-auto-fee <amount>", "Max auto fee cap")
-    .option("--gas-price <gwei>", "Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01)")
-    .option("--max-fee-per-gas <amount>", "EIP-1559 max fee per gas (Base)")
-    .option("--max-priority-fee-per-gas <amount>", "EIP-1559 max priority fee per gas (Base)")
+    .option("--gas-price <gwei>", "Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01); mutually exclusive with --gas-level")
+    .option("--gas-level <level>", "Gas price tier (eth only): low / average / high; mutually exclusive with --gas-price")
+    .option("--auto-fee", "Auto fee mode (eth only); delegates fee selection to trading bot for condition_orders strategy")
+    .option("--max-fee-per-gas <amount>", "EIP-1559 max fee per gas (BSC / BASE / ETH)")
+    .option("--max-priority-fee-per-gas <amount>", "EIP-1559 max priority fee per gas (BSC / BASE / ETH)")
     .option("--condition-orders <json>", 'JSON array of take-profit/stop-loss conditions, e.g. \'[{"order_type":"profit_stop","side":"sell","price_scale":"150","sell_ratio":"100"}]\'; trace types: \'[{"order_type":"profit_stop_trace","side":"sell","price_scale":"150","sell_ratio":"100","drawdown_rate":"50"}]\'')
     .option("--sell-ratio-type <type>", "Sell ratio base: buy_amount (default) / hold_amount; only used with --condition-orders")
     .option("--raw", "Output raw JSON")
@@ -52,8 +53,9 @@ export function registerSwapCommands(program: Command): void {
       if (opts.antiMev) params.is_anti_mev = true;
       if (opts.priorityFee) params.priority_fee = opts.priorityFee;
       if (opts.tipFee) params.tip_fee = opts.tipFee;
-      if (opts.maxAutoFee) params.max_auto_fee = opts.maxAutoFee;
+      if (opts.autoFee) params.auto_fee = true;
       if (opts.gasPrice) params.gas_price = String(Math.round(parseFloat(opts.gasPrice) * 1e9));
+      if (opts.gasLevel) params.gas_level = opts.gasLevel;
       if (opts.maxFeePerGas) params.max_fee_per_gas = opts.maxFeePerGas;
       if (opts.maxPriorityFeePerGas) params.max_priority_fee_per_gas = opts.maxPriorityFeePerGas;
       if (opts.conditionOrders) {
@@ -109,6 +111,17 @@ export function registerSwapCommands(program: Command): void {
       printResult(data, opts.raw);
     });
 
+  order
+    .command("gas-price")
+    .description("Query recommended EVM gas price (normal auth; eth / bsc / base)")
+    .requiredOption("--chain <chain>", "EVM chain: eth / bsc / base")
+    .option("--raw", "Output raw JSON")
+    .action(async (opts) => {
+      const client = new OpenApiClient(getConfig(false));
+      const data = await client.getGasPrice(opts.chain).catch(exitOnError);
+      printResult(data, opts.raw);
+    });
+
   program
     .command("multi-swap")
     .description("Submit token swaps across multiple wallets concurrently (up to 100 wallets)")
@@ -124,11 +137,11 @@ export function registerSwapCommands(program: Command): void {
     .option("--anti-mev", "Enable anti-MEV protection")
     .option("--priority-fee <sol>", "Priority fee in SOL (SOL only, ≥ 0.00001)")
     .option("--tip-fee <amount>", "Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB)")
-    .option("--auto-tip-fee", "Enable automatic tip fee")
-    .option("--max-auto-fee <amount>", "Max auto fee cap")
-    .option("--gas-price <gwei>", "Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01)")
-    .option("--max-fee-per-gas <amount>", "EIP-1559 max fee per gas (Base only)")
-    .option("--max-priority-fee-per-gas <amount>", "EIP-1559 max priority fee per gas (Base only)")
+    .option("--gas-price <gwei>", "Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01); mutually exclusive with --gas-level")
+    .option("--gas-level <level>", "Gas price tier (eth only): low / average / high; mutually exclusive with --gas-price")
+    .option("--auto-fee", "Auto fee mode (eth only); delegates fee selection to trading bot for condition_orders strategy")
+    .option("--max-fee-per-gas <amount>", "EIP-1559 max fee per gas (BSC / BASE / ETH)")
+    .option("--max-priority-fee-per-gas <amount>", "EIP-1559 max priority fee per gas (BSC / BASE / ETH)")
     .option("--condition-orders <json>", "JSON array of take-profit/stop-loss conditions attached to each successful wallet's swap")
     .option("--sell-ratio-type <type>", "Sell ratio base: buy_amount (default) / hold_amount; only used with --condition-orders")
     .option("--raw", "Output raw JSON")
@@ -166,9 +179,9 @@ export function registerSwapCommands(program: Command): void {
       if (opts.antiMev) params.is_anti_mev = true;
       if (opts.priorityFee) params.priority_fee = opts.priorityFee;
       if (opts.tipFee) params.tip_fee = opts.tipFee;
-      if (opts.autoTipFee) params.auto_tip_fee = true;
-      if (opts.maxAutoFee) params.max_auto_fee = opts.maxAutoFee;
+      if (opts.autoFee) params.auto_fee = true;
       if (opts.gasPrice) params.gas_price = String(Math.round(parseFloat(opts.gasPrice) * 1e9));
+      if (opts.gasLevel) params.gas_level = opts.gasLevel;
       if (opts.maxFeePerGas) params.max_fee_per_gas = opts.maxFeePerGas;
       if (opts.maxPriorityFeePerGas) params.max_priority_fee_per_gas = opts.maxPriorityFeePerGas;
       if (opts.conditionOrders) {
@@ -202,7 +215,11 @@ export function registerSwapCommands(program: Command): void {
     .option("--auto-slippage", "Enable automatic slippage")
     .option("--priority-fee <sol>", "Priority fee in SOL (required for SOL chain)")
     .option("--tip-fee <amount>", "Tip fee (required for SOL chain)")
-    .option("--gas-price <gwei>", "Gas price in gwei (required for BSC; ≥ 0.05 gwei / BASE/ETH ≥ 0.01 gwei)")
+    .option("--auto-fee", "Auto fee mode (eth only); delegates fee selection to trading bot")
+    .option("--gas-price <gwei>", "Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01 gwei); mutually exclusive with --gas-level")
+    .option("--gas-level <level>", "Gas price tier (eth only): low / average / high; mutually exclusive with --gas-price")
+    .option("--max-fee-per-gas <amount>", "EIP-1559 max fee per gas (BSC / BASE / ETH)")
+    .option("--max-priority-fee-per-gas <amount>", "EIP-1559 max priority fee per gas (BSC / BASE / ETH)")
     .option("--anti-mev", "Enable anti-MEV protection")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
@@ -233,7 +250,11 @@ export function registerSwapCommands(program: Command): void {
       if (opts.autoSlippage) params.auto_slippage = true;
       if (opts.priorityFee) params.priority_fee = opts.priorityFee;
       if (opts.tipFee) params.tip_fee = opts.tipFee;
+      if (opts.autoFee) params.auto_fee = true;
       if (opts.gasPrice) params.gas_price = String(Math.round(parseFloat(opts.gasPrice) * 1e9));
+      if (opts.gasLevel) params.gas_level = opts.gasLevel;
+      if (opts.maxFeePerGas) params.max_fee_per_gas = opts.maxFeePerGas;
+      if (opts.maxPriorityFeePerGas) params.max_priority_fee_per_gas = opts.maxPriorityFeePerGas;
       if (opts.antiMev) params.is_anti_mev = true;
       const client = new OpenApiClient(getConfig(true));
       const data = await client.createStrategyOrder(params).catch(exitOnError);

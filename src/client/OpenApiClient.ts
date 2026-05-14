@@ -80,9 +80,9 @@ export interface SwapParams {
   is_anti_mev?: boolean;
   priority_fee?: string;
   tip_fee?: string;
-  auto_tip_fee?: boolean;
-  max_auto_fee?: string;
   gas_price?: string;
+  gas_level?: string;
+  auto_fee?: boolean;
   max_fee_per_gas?: string;
   max_priority_fee_per_gas?: string;
   condition_orders?: StrategyConditionOrder[];
@@ -111,9 +111,9 @@ export interface MultiSwapParams {
   is_anti_mev?: boolean;
   priority_fee?: string;
   tip_fee?: string;
-  auto_tip_fee?: boolean;
-  max_auto_fee?: string;
   gas_price?: string;
+  gas_level?: string;
+  auto_fee?: boolean;
   max_fee_per_gas?: string;
   max_priority_fee_per_gas?: string;
   condition_orders?: StrategyConditionOrder[];
@@ -138,7 +138,9 @@ export interface StrategyCreateParams {
   slippage?: number;
   auto_slippage?: boolean;
   fee?: string;
+  auto_fee?: boolean;
   gas_price?: string;
+  gas_level?: string;
   max_fee_per_gas?: string;
   max_priority_fee_per_gas?: string;
   is_anti_mev?: boolean;
@@ -352,6 +354,10 @@ export class OpenApiClient {
 
   async queryOrder(orderId: string, chain: string): Promise<unknown> {
     return this.criticalRequest("GET", "/v1/trade/query_order", { order_id: orderId, chain }, null);
+  }
+
+  async getGasPrice(chain: string): Promise<unknown> {
+    return this.normalRequest("GET", "/v1/trade/gas_price", { chain });
   }
 
   // ---- Strategy order endpoints (critical auth) ----

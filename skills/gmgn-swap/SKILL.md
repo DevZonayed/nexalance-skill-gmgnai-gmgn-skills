@@ -1,7 +1,7 @@
 ---
 name: gmgn-swap
 description: "[FINANCIAL EXECUTION] Buy and sell meme coins and crypto tokens on Solana, BSC, Base, or Ethereum — single swap, multi-wallet batch trading, limit orders, stop loss, take profit, trailing stop loss, trailing take profit via GMGN API. Requires explicit user confirmation. Use when user asks to buy, sell, or swap a token, trade from multiple wallets, set a limit order, stop loss, take profit, or check order status."
-argument-hint: "[--chain <chain> --from <wallet> --input-token <addr> --output-token <addr> --amount <n>] | [order get --chain <chain> --order-id <id>] | [order strategy list --chain <chain> --group-tag <LimitOrder|STMix>] | [order strategy create --chain <chain> --order-type limit_order --sub-order-type <buy_low|buy_high|stop_loss|take_profit> ...]"
+argument-hint: "[--chain <chain> --from <wallet> --input-token <addr> --output-token <addr> --amount <n>] | [order get --chain <chain> --order-id <id>] | [order gas-price --chain <eth|bsc|base>] | [order strategy list --chain <chain> --group-tag <LimitOrder|STMix>] | [order strategy create --chain <chain> --order-type limit_order --sub-order-type <buy_low|buy_high|stop_loss|take_profit> ...]"
 metadata:
   cliHelp: "gmgn-cli swap --help"
 ---
@@ -49,6 +49,7 @@ Use the `gmgn-cli` tool to submit a token swap or query an existing order. `GMGN
 | `multi-swap` | Submit token swaps across multiple wallets concurrently (up to 100) |
 | `order quote` | Get a swap quote (no transaction submitted; requires critical auth) |
 | `order get` | Query order status |
+| `order gas-price` | Query recommended EVM gas price (low / average / high tiers); normal auth |
 | `order strategy create` | Create a limit/strategy order (requires private key) |
 | `order strategy list` | List strategy orders (requires private key) |
 | `order strategy cancel` | Cancel a strategy order (requires private key) |
@@ -87,6 +88,7 @@ All swap-related routes used by this skill go through GMGN's leaky-bucket limite
 | `multi-swap` | `POST /v1/trade/multi_swap` | 5 |
 | `order quote` | `GET /v1/trade/quote` | 2 |
 | `order get` | `GET /v1/trade/query_order` | 1 |
+| `order gas-price` | `GET /v1/trade/gas_price` | 1 |
 
 When a request returns `429`:
 
@@ -229,11 +231,11 @@ gmgn-cli multi-swap \
 | `--anti-mev` | No | Enable anti-MEV protection. |
 | `--priority-fee <sol>` | No | Priority fee in SOL (≥ 0.00001, SOL only). Required when using `--condition-orders` on SOL. |
 | `--tip-fee <amount>` | No | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB). Required when using `--condition-orders` on SOL. |
-| `--auto-tip-fee` | No | Enable automatic tip fee. |
-| `--max-auto-fee <amount>` | No | Max automatic fee cap. |
-| `--gas-price <gwei>` | No | Gas price in gwei (BSC: 0.05–10 / BASE: 0.01–10 / ETH: 2–20). Required when using `--condition-orders` on BSC. |
-| `--max-fee-per-gas <amount>` | No | EIP-1559 max fee per gas (Base / ETH). Defaults to `--gas-price` if omitted. |
-| `--max-priority-fee-per-gas <amount>` | No | EIP-1559 max priority fee per gas (Base / ETH). Defaults to `--gas-price` if omitted. |
+| `--gas-price <gwei>` | No | Gas price in gwei (BSC: 0.05–10 / BASE: 0.01–10 / ETH: 2–20). Required when using `--condition-orders` on BSC. Mutually exclusive with `--gas-level`. |
+| `--gas-level <level>` | No | Gas price tier **eth only**: `low` / `average` / `high`. Mutually exclusive with `--gas-price`. |
+| `--auto-fee` | No | Auto fee mode; **eth only** — delegates fee selection to the trading bot for `--condition-orders` strategy. |
+| `--max-fee-per-gas <amount>` | No | EIP-1559 max fee per gas (BSC / BASE / ETH). Clamped per chain minimums. Defaults to `--gas-price` if omitted (BASE/ETH). |
+| `--max-priority-fee-per-gas <amount>` | No | EIP-1559 max priority fee per gas (BSC / BASE / ETH). Clamped per chain minimums; capped to `--max-fee-per-gas`. |
 | `--condition-orders <json>` | No | JSON array of condition sub-orders (take-profit / stop-loss) attached to each successful wallet's swap. Same structure as `swap --condition-orders`. Strategy creation is best-effort per wallet. |
 | `--sell-ratio-type <type>` | No | Sell ratio base for `--condition-orders`: `buy_amount` (default) / `hold_amount`. |
 
@@ -281,6 +283,26 @@ gmgn-cli order quote \
 gmgn-cli order get --chain sol --order-id <order_id>
 ```
 
+## `order gas-price` Usage
+
+Query recommended EVM gas price tiers. Uses normal auth (API Key only — no private key required).
+
+```bash
+gmgn-cli order gas-price --chain eth
+gmgn-cli order gas-price --chain bsc
+gmgn-cli order gas-price --chain base
+```
+
+### `order gas-price` Response Fields
+
+| Field              | Type   | Description |
+| ------------------ | ------ | ---- |
+| `chain`            | string | Chain identifier |
+| `suggest_base_fee` | string | Suggested base fee (gwei) |
+| `low`              | string | Low-priority gas price (gwei) |
+| `average`          | string | Average-priority gas price (gwei) |
+| `high`             | string | High-priority gas price (gwei) |
+
 ## `swap` Parameters
 
 | Parameter | Required | Description |
@@ -297,10 +319,11 @@ gmgn-cli order get --chain sol --order-id <order_id>
 | `--anti-mev` | No | Enable anti-MEV protection — **recommended**; protects against frontrunning and sandwich attacks. Default: on |
 | `--priority-fee <sol>` | No | Priority fee in SOL (≥ 0.00001, SOL only) |
 | `--tip-fee <n>` | No | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB) |
-| `--max-auto-fee <n>` | No | Max automatic fee cap |
-| `--gas-price <gwei>` | No | Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01) |
-| `--max-fee-per-gas <n>` | No | EIP-1559 max fee per gas (Base only) |
-| `--max-priority-fee-per-gas <n>` | No | EIP-1559 max priority fee per gas (Base only) |
+| `--gas-price <gwei>` | No | Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01). Mutually exclusive with `--gas-level`. |
+| `--gas-level <level>` | No | Gas price tier **eth only**: `low` / `average` / `high`. Mutually exclusive with `--gas-price`. |
+| `--auto-fee` | No | Auto fee mode; **eth only** — delegates fee selection to the trading bot for `--condition-orders` strategy. |
+| `--max-fee-per-gas <n>` | No | EIP-1559 max fee per gas (BSC / BASE / ETH). Clamped per chain minimums. Defaults to `--gas-price` if omitted (BASE/ETH). |
+| `--max-priority-fee-per-gas <n>` | No | EIP-1559 max priority fee per gas (BSC / BASE / ETH). Clamped per chain minimums; capped to `--max-fee-per-gas`. |
 | `--condition-orders <json>` | No | JSON array of condition sub-orders (take-profit / stop-loss) to attach after a successful swap. **Max 10 sub-orders.** Strategy creation is best-effort: if the swap succeeds but strategy creation fails, the swap result is still returned. See ConditionOrder fields below. |
 | `--sell-ratio-type <type>` | No | Sell ratio basis for `--condition-orders`: `buy_amount` (default) — when triggered, sells a fixed token amount stored at strategy creation time; `hold_amount` — when triggered, sells a fixed percentage of the position held at trigger time |
 
@@ -470,7 +493,11 @@ Convert `report.input_amount` and `report.output_amount` from smallest unit usin
 | `--auto-slippage` | No | Enable automatic slippage |
 | `--priority-fee` | No | Priority fee in SOL (SOL only) |
 | `--tip-fee` | No | Tip fee |
-| `--gas-price` | No | Gas price in gwei (BSC ≥ 0.05 gwei / BASE/ETH ≥ 0.01 gwei) |
+| `--auto-fee` | No | Auto fee mode; **eth only** — delegates fee selection to the trading bot. |
+| `--gas-price` | No | Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01 gwei). Mutually exclusive with `--gas-level`. |
+| `--gas-level` | No | Gas price tier **eth only**: `low` / `average` / `high`. Mutually exclusive with `--gas-price`. |
+| `--max-fee-per-gas` | No | EIP-1559 max fee per gas (BSC / BASE / ETH). Clamped per chain minimums. |
+| `--max-priority-fee-per-gas` | No | EIP-1559 max priority fee per gas (BSC / BASE / ETH). Clamped per chain minimums; capped to `--max-fee-per-gas`. |
 | `--anti-mev` | No | Enable anti-MEV protection |
 
 
@@ -564,6 +591,12 @@ gmgn-cli order strategy cancel \
 - `--amount` is in the **smallest unit** (e.g., lamports for SOL)
 - `order strategy create`, `order strategy list`, and `order strategy cancel` use critical auth (require `GMGN_PRIVATE_KEY`)
 - Use `--raw` to get single-line JSON for further processing
+- **`--auto-fee` is eth-only** — passing it on BSC/BASE/SOL is silently ignored by the server or rejected
+- **`--gas-level` is eth-only** — the server rejects non-eth chains with 400 for `--gas-level`
+- **EIP-1559 minimum values per chain:**
+  - BSC: `max_fee_per_gas` and `max_priority_fee_per_gas` min 50 000 000 wei (≈ 0.05 gwei); passing `"0"` returns 400
+  - BASE / ETH: `max_fee_per_gas` and `max_priority_fee_per_gas` min 200 000 wei
+  - EIP-1559 clamping applies only when `--condition-orders` is present (swap / multi-swap) or on every request (strategy/create)
 
 ## Input Validation
 
