@@ -418,13 +418,18 @@ The response is an object with a `list` array. Each item in `list` represents on
 | `maker_token_tags` | Token-specific behavior tags for this wallet (e.g. `["bundler"]`, `["paper_hands"]`, `["top_holder"]`) |
 | `created_at` | Wallet creation timestamp (Unix seconds); `0` if unknown |
 
+**Shared Funding**
+
+| Field | Description |
+|-------|-------------|
+| `native_transfer` | First native token (SOL/BNB/ETH) transfer into this wallet — indicates the original funding source; wallets sharing the same `native_transfer.address` are likely funded from a common origin (coordinated wallets / same operator) |
+
 **Last Transaction Records**
 
 Each of the following is an object with `name`, `address`, `timestamp`, `tx_hash`, `type`:
 
 | Field | Description |
 |-------|-------------|
-| `native_transfer` | Most recent native token (SOL/BNB/ETH) transfer associated with this wallet |
 | `token_transfer` | Most recent token transfer (buy or sell) |
 | `token_transfer_in` | Most recent inbound token transfer |
 | `token_transfer_out` | Most recent outbound token transfer |
