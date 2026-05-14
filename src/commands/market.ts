@@ -290,13 +290,14 @@ const TRENCHES_FILTER_PRESETS: Record<string, Record<string, number | string>> =
 };
 
 // Convert API snake_case field to Commander.js opts key
-// Commander.js camelCase: only converts -[a-z] patterns, digits stay as-is
-// e.g. min_volume_24h → min-volume-24h → minVolume-24h (digit prefix -24 is NOT converted)
-// e.g. min_smart_degen_count → min-smart-degen-count → minSmartDegenCount (all letters, converts fully)
+// Commander.js camelCase: converts -[a-z] to uppercase, and removes hyphen before digits
+// e.g. min_volume_24h → min-volume-24h → minVolume-24h → minVolume24h
+// e.g. min_smart_degen_count → min-smart-degen-count → minSmartDegenCount
 function apiFieldToCliKey(apiField: string): string {
   return apiField
     .replace(/_/g, '-')
-    .replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
+    .replace(/-([a-z])/g, (_, c: string) => c.toUpperCase())
+    .replace(/-(\d)/g, '$1');
 }
 
 // Client-side sort helpers (API does not support server-side sort for trenches)
