@@ -1,7 +1,7 @@
 ---
 name: gmgn-swap
 description: "[FINANCIAL EXECUTION] Buy and sell meme coins and crypto tokens on Solana, BSC, Base, or Ethereum — single swap, multi-wallet batch trading, limit orders, stop loss, take profit, trailing stop loss, trailing take profit via GMGN API. Requires explicit user confirmation. Use when user asks to buy, sell, or swap a token, trade from multiple wallets, set a limit order, stop loss, take profit, or check order status."
-argument-hint: "[--chain <chain> --from <wallet> --input-token <addr> --output-token <addr> --amount <n>] | [order get --chain <chain> --order-id <id>] | [order strategy list --chain <chain> --group-tag <LimitOrder|STMix>] | [order strategy create --chain <chain> --order-type limit_order --sub-order-type <buy_low|buy_high|stop_loss|take_profit> ...]"
+argument-hint: "[--chain <chain> --from <wallet> --input-token <addr> --output-token <addr> --amount <n>] | [order get --chain <chain> --order-id <id>] | [order gas-price --chain <eth|bsc|base>] | [order strategy list --chain <chain> --group-tag <LimitOrder|STMix>] | [order strategy create --chain <chain> --order-type limit_order --sub-order-type <buy_low|buy_high|stop_loss|take_profit> ...]"
 metadata:
   cliHelp: "gmgn-cli swap --help"
 ---
@@ -49,6 +49,7 @@ Use the `gmgn-cli` tool to submit a token swap or query an existing order. `GMGN
 | `multi-swap` | Submit token swaps across multiple wallets concurrently (up to 100) |
 | `order quote` | Get a swap quote (no transaction submitted; requires critical auth) |
 | `order get` | Query order status |
+| `order gas-price` | Query recommended EVM gas price (low / average / high tiers); normal auth |
 | `order strategy create` | Create a limit/strategy order (requires private key) |
 | `order strategy list` | List strategy orders (requires private key) |
 | `order strategy cancel` | Cancel a strategy order (requires private key) |
@@ -87,6 +88,7 @@ All swap-related routes used by this skill go through GMGN's leaky-bucket limite
 | `multi-swap` | `POST /v1/trade/multi_swap` | 5 |
 | `order quote` | `GET /v1/trade/quote` | 2 |
 | `order get` | `GET /v1/trade/query_order` | 1 |
+| `order gas-price` | `GET /v1/trade/gas_price` | 1 |
 
 When a request returns `429`:
 
@@ -119,6 +121,8 @@ When a request returns `429`:
 - Both `GMGN_API_KEY` and `GMGN_PRIVATE_KEY` are read from the `.env` file by the CLI at startup. They are **never passed as command-line arguments** and never appear in shell command strings.
 - `GMGN_PRIVATE_KEY` is used exclusively for **local message signing** — the private key never leaves the machine. The CLI computes an Ed25519 or RSA-SHA256 signature in-process and transmits only the base64-encoded result in the `X-Signature` request header.
 - `GMGN_API_KEY` is transmitted in the `X-APIKEY` request header to GMGN's servers over HTTPS.
+
+---
 
 ## `swap` Usage
 
@@ -167,142 +171,29 @@ gmgn-cli swap \
   --percent 50
 ```
 
-## `multi-swap` Usage
-
-Submit a token swap across multiple wallets concurrently. Each wallet executes independently — one wallet's failure does not affect others. Up to 100 wallets per request. All wallets must be bound to the API Key. Requires `GMGN_PRIVATE_KEY`.
-
-```bash
-# Basic multi-wallet swap
-gmgn-cli multi-swap \
-  --chain sol \
-  --accounts <addr1>,<addr2> \
-  --input-token <input_token_address> \
-  --output-token <output_token_address> \
-  --input-amount '{"<addr1>":"1000000","<addr2>":"2000000"}' \
-  --slippage 0.01
-
-# Sell a percentage of each wallet's balance (use --input-amount-bps)
-gmgn-cli multi-swap \
-  --chain sol \
-  --accounts <addr1>,<addr2> \
-  --input-token <token_address> \
-  --output-token <sol_address> \
-  --input-amount-bps '{"<addr1>":"5000","<addr2>":"10000"}' \
-  --slippage 0.01
-
-# With per-wallet take-profit / stop-loss (condition_orders)
-gmgn-cli multi-swap \
-  --chain sol \
-  --accounts <addr1>,<addr2> \
-  --input-token So11111111111111111111111111111111111111112 \
-  --output-token <token_address> \
-  --input-amount '{"<addr1>":"1000000","<addr2>":"2000000"}' \
-  --slippage 0.3 \
-  --priority-fee 0.00001 \
-  --tip-fee 0.00001 \
-  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"100","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"50","sell_ratio":"100"}]'
-
-# ETH multi-wallet swap (EIP-1559 gas)
-gmgn-cli multi-swap \
-  --chain eth \
-  --accounts <0xaddr1>,<0xaddr2> \
-  --input-token 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48 \
-  --output-token <token_address> \
-  --input-amount '{"<0xaddr1>":"1000000","<0xaddr2>":"2000000"}' \
-  --slippage 0.01 \
-  --gas-price 5
-```
-
-## `multi-swap` Parameters
-
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` |
-| `--accounts` | Yes | Comma-separated wallet addresses (1–100, all must be bound to the API Key) |
-| `--input-token` | Yes | Input token contract address |
-| `--output-token` | Yes | Output token contract address |
-| `--input-amount` | No* | JSON map of `wallet_address → input amount` (smallest unit). One of `--input-amount`, `--input-amount-bps`, or `--output-amount` is required. |
-| `--input-amount-bps` | No* | JSON map of `wallet_address → percent in bps` (1–10000; 5000 = 50%). Only valid when `input_token` is NOT a currency. |
-| `--output-amount` | No* | JSON map of `wallet_address → target output amount` (smallest unit). |
-| `--slippage <n>` | No | Slippage tolerance, e.g. `0.01` = 1%. Mutually exclusive with `--auto-slippage`. |
-| `--auto-slippage` | No | Enable automatic slippage. |
-| `--anti-mev` | No | Enable anti-MEV protection. |
-| `--priority-fee <sol>` | No | Priority fee in SOL (≥ 0.00001, SOL only). Required when using `--condition-orders` on SOL. |
-| `--tip-fee <amount>` | No | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB). Required when using `--condition-orders` on SOL. |
-| `--auto-tip-fee` | No | Enable automatic tip fee. |
-| `--max-auto-fee <amount>` | No | Max automatic fee cap. |
-| `--gas-price <gwei>` | No | Gas price in gwei (BSC: 0.05–10 / BASE: 0.01–10 / ETH: 2–20). Required when using `--condition-orders` on BSC. |
-| `--max-fee-per-gas <amount>` | No | EIP-1559 max fee per gas (Base / ETH). Defaults to `--gas-price` if omitted. |
-| `--max-priority-fee-per-gas <amount>` | No | EIP-1559 max priority fee per gas (Base / ETH). Defaults to `--gas-price` if omitted. |
-| `--condition-orders <json>` | No | JSON array of condition sub-orders (take-profit / stop-loss) attached to each successful wallet's swap. Same structure as `swap --condition-orders`. Strategy creation is best-effort per wallet. |
-| `--sell-ratio-type <type>` | No | Sell ratio base for `--condition-orders`: `buy_amount` (default) / `hold_amount`. |
-
-## `multi-swap` Response Fields
-
-The response `data` is an array — one element per wallet:
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `account` | string | Wallet address |
-| `success` | bool | Whether this wallet's swap succeeded |
-| `error` | string | Error message on failure; absent on success |
-| `error_code` | string | Error code on failure; absent on success |
-| `result` | object | On success: OrderResponse (same fields as `swap` response). On failure: absent. |
-| `result.strategy_order_id` | string | Strategy order ID; only present when `--condition-orders` was passed and strategy creation succeeded (best-effort) |
-
-## `order quote` Usage
-
-Get an estimated output amount before submitting a swap. All supported quote chains use critical auth and require `GMGN_PRIVATE_KEY`.
-
-```bash
-gmgn-cli order quote \
-  --chain sol \
-  --from <wallet_address> \
-  --input-token <input_token_address> \
-  --output-token <output_token_address> \
-  --amount <input_amount_smallest_unit> \
-  --slippage 0.01
-```
-
-### `order quote` Response Fields
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `input_token` | string | Input token contract address |
-| `output_token` | string | Output token contract address |
-| `input_amount` | string | Input amount (smallest unit) |
-| `output_amount` | string | Expected output amount (smallest unit) |
-| `min_output_amount` | string | Minimum output after slippage |
-| `slippage` | number | Actual slippage percentage |
-
-## `order get` Usage
-
-```bash
-gmgn-cli order get --chain sol --order-id <order_id>
-```
-
 ## `swap` Parameters
 
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` |
-| `--from` | Yes | Wallet address (must match API Key binding) |
-| `--input-token` | Yes | Input token contract address |
-| `--output-token` | Yes | Output token contract address |
-| `--amount` | No* | Input amount in smallest unit. **Mutually exclusive with `--percent`** — provide one or the other, never both. Required unless `--percent` is used. |
-| `--percent <pct>` | No* | Sell percentage of `input_token`, e.g. `50` = 50%, `1` = 1%. Sets `input_amount` to `0` automatically. **Mutually exclusive with `--amount`. Only valid when `input_token` is NOT a currency (SOL/BNB/ETH/USDC).** |
-| `--slippage <n>` | No | Slippage tolerance, e.g. `0.01` = 1%. **Mutually exclusive with `--auto-slippage`** — use one or the other. |
-| `--auto-slippage` | No | Enable automatic slippage. **Mutually exclusive with `--slippage`.** |
-| `--min-output <n>` | No | Minimum output amount |
-| `--anti-mev` | No | Enable anti-MEV protection — **recommended**; protects against frontrunning and sandwich attacks. Default: on |
-| `--priority-fee <sol>` | No | Priority fee in SOL (≥ 0.00001, SOL only) |
-| `--tip-fee <n>` | No | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB) |
-| `--max-auto-fee <n>` | No | Max automatic fee cap |
-| `--gas-price <gwei>` | No | Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01) |
-| `--max-fee-per-gas <n>` | No | EIP-1559 max fee per gas (Base only) |
-| `--max-priority-fee-per-gas <n>` | No | EIP-1559 max priority fee per gas (Base only) |
-| `--condition-orders <json>` | No | JSON array of condition sub-orders (take-profit / stop-loss) to attach after a successful swap. **Max 10 sub-orders.** Strategy creation is best-effort: if the swap succeeds but strategy creation fails, the swap result is still returned. See ConditionOrder fields below. |
-| `--sell-ratio-type <type>` | No | Sell ratio basis for `--condition-orders`: `buy_amount` (default) — when triggered, sells a fixed token amount stored at strategy creation time; `hold_amount` — when triggered, sells a fixed percentage of the position held at trigger time |
+| Parameter | Required | Chain | Description |
+|-----------|----------|-------|-------------|
+| `--chain` | Yes | all | `sol` / `bsc` / `base` / `eth` |
+| `--from` | Yes | all | Wallet address (must match API Key binding) |
+| `--input-token` | Yes | all | Input token contract address |
+| `--output-token` | Yes | all | Output token contract address |
+| `--amount` | No* | all | Input amount in smallest unit. **Mutually exclusive with `--percent`** — provide one or the other, never both. Required unless `--percent` is used. |
+| `--percent <pct>` | No* | all | Sell percentage of `input_token`, e.g. `50` = 50%, `1` = 1%. Sets `input_amount` to `0` automatically. **Mutually exclusive with `--amount`. Only valid when `input_token` is NOT a currency (SOL/BNB/ETH/USDC).** |
+| `--slippage <n>` | No | all | Slippage tolerance, e.g. `0.01` = 1%. **Mutually exclusive with `--auto-slippage`** — use one or the other. |
+| `--auto-slippage` | No | all | Enable automatic slippage. **Mutually exclusive with `--slippage`.** |
+| `--min-output <n>` | No | all | Minimum output amount |
+| `--anti-mev` | No | all | Enable anti-MEV protection — **recommended**; protects against frontrunning and sandwich attacks. Default: on |
+| `--priority-fee <sol>` | No | `sol` | Priority fee in SOL (≥ 0.00001). Required when using `--condition-orders` on SOL. |
+| `--tip-fee <n>` | No | `sol` / `bsc` | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB). Required when using `--condition-orders` on SOL. |
+| `--gas-price <gwei>` | No | `bsc` / `base` / `eth` | Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01). Required when using `--condition-orders` on BSC. Mutually exclusive with `--gas-level`. |
+| `--gas-level <level>` | No | `eth` | Gas price tier: `low` / `average` / `high`. Mutually exclusive with `--gas-price`. |
+| `--auto-fee` | No | `eth` | Auto fee mode — delegates fee selection to the trading bot for `--condition-orders` strategy. |
+| `--max-fee-per-gas <n>` | No | `bsc` / `base` / `eth` | EIP-1559 max fee per gas. Clamped per chain minimums. Defaults to `--gas-price` if omitted (BASE/ETH). |
+| `--max-priority-fee-per-gas <n>` | No | `bsc` / `base` / `eth` | EIP-1559 max priority fee per gas. Clamped per chain minimums; capped to `--max-fee-per-gas`. |
+| `--condition-orders <json>` | No | all | JSON array of condition sub-orders (take-profit / stop-loss) to attach after a successful swap. **Max 10 sub-orders.** Strategy creation is best-effort: if the swap succeeds but strategy creation fails, the swap result is still returned. See ConditionOrder fields below. |
+| `--sell-ratio-type <type>` | No | all | Sell ratio basis for `--condition-orders`: `buy_amount` (default) — when triggered, sells a fixed token amount stored at strategy creation time; `hold_amount` — when triggered, sells a fixed percentage of the position held at trigger time |
 
 ### ConditionOrder Fields (for `--condition-orders`)
 
@@ -450,68 +341,153 @@ Order ID: {order_id}
 
 Convert `report.input_amount` and `report.output_amount` from smallest unit using `report.input_token_decimals` and `report.output_token_decimals` before displaying.
 
-## `order strategy create` Parameters
+---
 
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` |
-| `--from` | Yes | Wallet address (must match API Key binding) |
-| `--base-token` | Yes | Base token contract address |
-| `--quote-token` | Yes | Quote token contract address |
-| `--order-type` | Yes | Order type: `limit_order` |
-| `--sub-order-type` | Yes | Sub-order type: `buy_low` / `buy_high` / `stop_loss` / `take_profit` |
-| `--check-price` | Yes | Trigger check price |
-| `--amount-in` | No* | Input amount (smallest unit). Mutually exclusive with `--amount-in-percent` |
-| `--amount-in-percent` | No* | Input as percentage (e.g. `50` = 50%). Mutually exclusive with `--amount-in` |
-| `--limit-price-mode` | No | `exact` / `slippage` (default: `slippage`) |
-| `--expire-in` | No | Order expiry in seconds |
-| `--sell-ratio-type` | No | `buy_amount` (default) — when triggered, sells a fixed token amount stored at strategy creation time; `hold_amount` — when triggered, sells a fixed percentage of the position held at trigger time |
-| `--slippage` | No | Slippage tolerance, e.g. `0.01` = 1%. Mutually exclusive with `--auto-slippage` |
-| `--auto-slippage` | No | Enable automatic slippage |
-| `--priority-fee` | No | Priority fee in SOL (SOL only) |
-| `--tip-fee` | No | Tip fee |
-| `--gas-price` | No | Gas price in gwei (BSC ≥ 0.05 gwei / BASE/ETH ≥ 0.01 gwei) |
-| `--anti-mev` | No | Enable anti-MEV protection |
+## `multi-swap` Usage
 
+Submit a token swap across multiple wallets concurrently. Each wallet executes independently — one wallet's failure does not affect others. Up to 100 wallets per request. All wallets must be bound to the API Key. Requires `GMGN_PRIVATE_KEY`.
 
-### `order strategy create` Response Fields
+```bash
+# Basic multi-wallet swap
+gmgn-cli multi-swap \
+  --chain sol \
+  --accounts <addr1>,<addr2> \
+  --input-token <input_token_address> \
+  --output-token <output_token_address> \
+  --input-amount '{"<addr1>":"1000000","<addr2>":"2000000"}' \
+  --slippage 0.01
+
+# Sell a percentage of each wallet's balance (use --input-amount-bps)
+gmgn-cli multi-swap \
+  --chain sol \
+  --accounts <addr1>,<addr2> \
+  --input-token <token_address> \
+  --output-token <sol_address> \
+  --input-amount-bps '{"<addr1>":"5000","<addr2>":"10000"}' \
+  --slippage 0.01
+
+# With per-wallet take-profit / stop-loss (condition_orders)
+gmgn-cli multi-swap \
+  --chain sol \
+  --accounts <addr1>,<addr2> \
+  --input-token So11111111111111111111111111111111111111112 \
+  --output-token <token_address> \
+  --input-amount '{"<addr1>":"1000000","<addr2>":"2000000"}' \
+  --slippage 0.3 \
+  --priority-fee 0.00001 \
+  --tip-fee 0.00001 \
+  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"100","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"50","sell_ratio":"100"}]'
+
+# ETH multi-wallet swap (EIP-1559 gas)
+gmgn-cli multi-swap \
+  --chain eth \
+  --accounts <0xaddr1>,<0xaddr2> \
+  --input-token 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48 \
+  --output-token <token_address> \
+  --input-amount '{"<0xaddr1>":"1000000","<0xaddr2>":"2000000"}' \
+  --slippage 0.01 \
+  --gas-price 5
+```
+
+## `multi-swap` Parameters
+
+| Parameter | Required | Chain | Description |
+|-----------|----------|-------|-------------|
+| `--chain` | Yes | all | `sol` / `bsc` / `base` / `eth` |
+| `--accounts` | Yes | all | Comma-separated wallet addresses (1–100, all must be bound to the API Key) |
+| `--input-token` | Yes | all | Input token contract address |
+| `--output-token` | Yes | all | Output token contract address |
+| `--input-amount` | No* | all | JSON map of `wallet_address → input amount` (smallest unit). One of `--input-amount`, `--input-amount-bps`, or `--output-amount` is required. |
+| `--input-amount-bps` | No* | all | JSON map of `wallet_address → percent in bps` (1–10000; 5000 = 50%). Only valid when `input_token` is NOT a currency. |
+| `--output-amount` | No* | all | JSON map of `wallet_address → target output amount` (smallest unit). |
+| `--slippage <n>` | No | all | Slippage tolerance, e.g. `0.01` = 1%. Mutually exclusive with `--auto-slippage`. |
+| `--auto-slippage` | No | all | Enable automatic slippage. |
+| `--anti-mev` | No | all | Enable anti-MEV protection. |
+| `--priority-fee <sol>` | No | `sol` | Priority fee in SOL (≥ 0.00001). Required when using `--condition-orders` on SOL. |
+| `--tip-fee <amount>` | No | `sol` / `bsc` | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB). Required when using `--condition-orders` on SOL. |
+| `--gas-price <gwei>` | No | `bsc` / `base` / `eth` | Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01). Required when using `--condition-orders` on BSC. Mutually exclusive with `--gas-level`. |
+| `--gas-level <level>` | No | `eth` | Gas price tier: `low` / `average` / `high`. Mutually exclusive with `--gas-price`. |
+| `--auto-fee` | No | `eth` | Auto fee mode — delegates fee selection to the trading bot for `--condition-orders` strategy. |
+| `--max-fee-per-gas <amount>` | No | `bsc` / `base` / `eth` | EIP-1559 max fee per gas. Clamped per chain minimums. Defaults to `--gas-price` if omitted (BASE/ETH). |
+| `--max-priority-fee-per-gas <amount>` | No | `bsc` / `base` / `eth` | EIP-1559 max priority fee per gas. Clamped per chain minimums; capped to `--max-fee-per-gas`. |
+| `--condition-orders <json>` | No | all | JSON array of condition sub-orders (take-profit / stop-loss) attached to each successful wallet's swap. Same structure as `swap --condition-orders`. Strategy creation is best-effort per wallet. |
+| `--sell-ratio-type <type>` | No | all | Sell ratio base for `--condition-orders`: `buy_amount` (default) / `hold_amount`. |
+
+## `multi-swap` Response Fields
+
+The response `data` is an array — one element per wallet:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `order_id` | string | Created strategy order ID |
-| `is_update` | bool | `true` if an existing order was updated, `false` if newly created |
+| `account` | string | Wallet address |
+| `success` | bool | Whether this wallet's swap succeeded |
+| `error` | string | Error message on failure; absent on success |
+| `error_code` | string | Error code on failure; absent on success |
+| `result` | object | On success: OrderResponse (same fields as `swap` response). On failure: absent. |
+| `result.strategy_order_id` | string | Strategy order ID; only present when `--condition-orders` was passed and strategy creation succeeded (best-effort) |
 
-## `order strategy list` Parameters
+---
 
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` |
-| `--type` | No | `open` (default) / `history` |
-| `--from` | No | Filter by wallet address |
-| `--group-tag` | Yes | Filter by order group: `LimitOrder` (limit orders only) / `STMix` (mixed strategy orders: take-profit, stop-loss, trailing take-profit, trailing stop-loss) |
-| `--base-token` | No | Filter by token address |
-| `--page-token` | No | Pagination cursor from previous response |
-| `--limit` | No | Results per page (default 10 for history) |
+## `order quote` Usage
 
-### `order strategy list` Response Fields
+Get an estimated output amount before submitting a swap. All supported quote chains use critical auth and require `GMGN_PRIVATE_KEY`.
+
+```bash
+gmgn-cli order quote \
+  --chain sol \
+  --from <wallet_address> \
+  --input-token <input_token_address> \
+  --output-token <output_token_address> \
+  --amount <input_amount_smallest_unit> \
+  --slippage 0.01
+```
+
+### `order quote` Response Fields
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `next_page_token` | string | Cursor for next page; empty when no more data |
-| `total` | int | Total count (only returned when `--type open`) |
-| `list` | array | Strategy order list |
+| `input_token` | string | Input token contract address |
+| `output_token` | string | Output token contract address |
+| `input_amount` | string | Input amount (smallest unit) |
+| `output_amount` | string | Expected output amount (smallest unit) |
+| `min_output_amount` | string | Minimum output after slippage |
+| `slippage` | number | Actual slippage percentage |
 
-## `order strategy cancel` Parameters
+---
 
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` |
-| `--from` | Yes | Wallet address (must match API Key binding) |
-| `--order-id` | Yes | Order ID to cancel |
-| `--order-type` | No | Order type: `limit_order` (limit order) / `smart_trade` (mixed strategy order: take-profit, stop-loss, trailing take-profit, trailing stop-loss) |
-| `--close-sell-model` | No | Sell model when closing the order |
+## `order get` Usage
 
-## `order strategy` Usage Examples
+```bash
+gmgn-cli order get --chain sol --order-id <order_id>
+```
+
+Response fields are shared with `swap` — see [`swap` / `order get` Response Fields](#swap--order-get-response-fields) above.
+
+---
+
+## `order gas-price` Usage
+
+Query recommended EVM gas price tiers. Uses normal auth (API Key only — no private key required).
+
+```bash
+gmgn-cli order gas-price --chain eth
+gmgn-cli order gas-price --chain bsc
+gmgn-cli order gas-price --chain base
+```
+
+### `order gas-price` Response Fields
+
+| Field              | Type   | Description |
+| ------------------ | ------ | ---- |
+| `chain`            | string | Chain identifier |
+| `suggest_base_fee` | string | Suggested base fee (gwei) |
+| `low`              | string | Low-priority gas price (gwei) |
+| `average`          | string | Average-priority gas price (gwei) |
+| `high`             | string | High-priority gas price (gwei) |
+
+---
+
+## `order strategy create` Usage
 
 ```bash
 # Create a take-profit order: sell when price rises to target
@@ -537,7 +513,47 @@ gmgn-cli order strategy create \
   --check-price 0.0005 \
   --amount-in-percent 100 \
   --slippage 0.01
+```
 
+## `order strategy create` Parameters
+
+| Parameter | Required | Chain | Description |
+|-----------|----------|-------|-------------|
+| `--chain` | Yes | all | `sol` / `bsc` / `base` / `eth` |
+| `--from` | Yes | all | Wallet address (must match API Key binding) |
+| `--base-token` | Yes | all | Base token contract address |
+| `--quote-token` | Yes | all | Quote token contract address |
+| `--order-type` | Yes | all | Order type: `limit_order` |
+| `--sub-order-type` | Yes | all | Sub-order type: `buy_low` / `buy_high` / `stop_loss` / `take_profit` |
+| `--check-price` | Yes | all | Trigger check price |
+| `--amount-in` | No* | all | Input amount (smallest unit). Mutually exclusive with `--amount-in-percent` |
+| `--amount-in-percent` | No* | all | Input as percentage (e.g. `50` = 50%). Mutually exclusive with `--amount-in` |
+| `--limit-price-mode` | No | all | `exact` / `slippage` (default: `slippage`) |
+| `--expire-in` | No | all | Order expiry in seconds |
+| `--sell-ratio-type` | No | all | `buy_amount` (default) — when triggered, sells a fixed token amount stored at strategy creation time; `hold_amount` — when triggered, sells a fixed percentage of the position held at trigger time |
+| `--slippage` | No | all | Slippage tolerance, e.g. `0.01` = 1%. Mutually exclusive with `--auto-slippage` |
+| `--auto-slippage` | No | all | Enable automatic slippage |
+| `--priority-fee` | No | `sol` | Priority fee in SOL (≥ 0.00001). **Required** for SOL. |
+| `--tip-fee` | No | `sol` / `bsc` | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB). **Required** for SOL. |
+| `--auto-fee` | No | `eth` | Auto fee mode — delegates fee selection to the trading bot. |
+| `--gas-price` | No | `bsc` / `base` / `eth` | Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01). **Required** for BSC. Mutually exclusive with `--gas-level`. |
+| `--gas-level` | No | `eth` | Gas price tier: `low` / `average` / `high`. Mutually exclusive with `--gas-price`. |
+| `--max-fee-per-gas` | No | `bsc` / `base` / `eth` | EIP-1559 max fee per gas. Clamped per chain minimums. |
+| `--max-priority-fee-per-gas` | No | `bsc` / `base` / `eth` | EIP-1559 max priority fee per gas. Clamped per chain minimums; capped to `--max-fee-per-gas`. |
+| `--anti-mev` | No | all | Enable anti-MEV protection |
+
+### `order strategy create` Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `order_id` | string | Created strategy order ID |
+| `is_update` | bool | `true` if an existing order was updated, `false` if newly created |
+
+---
+
+## `order strategy list` Usage
+
+```bash
 # List open condition orders (profit_stop / loss_stop / trace types) — use STMix
 gmgn-cli order strategy list --chain sol --group-tag STMix
 
@@ -549,13 +565,51 @@ gmgn-cli order strategy list --chain sol --group-tag STMix --type history --limi
 
 # Filter by token
 gmgn-cli order strategy list --chain sol --group-tag STMix --base-token <token_address>
+```
 
+## `order strategy list` Parameters
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` |
+| `--type` | No | `open` (default) / `history` |
+| `--from` | No | Filter by wallet address |
+| `--group-tag` | Yes | Filter by order group: `LimitOrder` (limit orders only) / `STMix` (mixed strategy orders: take-profit, stop-loss, trailing take-profit, trailing stop-loss) |
+| `--base-token` | No | Filter by token address |
+| `--page-token` | No | Pagination cursor from previous response |
+| `--limit` | No | Results per page (default 10 for history) |
+
+### `order strategy list` Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `next_page_token` | string | Cursor for next page; empty when no more data |
+| `total` | int | Total count (only returned when `--type open`) |
+| `list` | array | Strategy order list |
+
+---
+
+## `order strategy cancel` Usage
+
+```bash
 # Cancel a strategy order
 gmgn-cli order strategy cancel \
   --chain sol \
   --from <wallet_address> \
   --order-id <order_id>
 ```
+
+## `order strategy cancel` Parameters
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` |
+| `--from` | Yes | Wallet address (must match API Key binding) |
+| `--order-id` | Yes | Order ID to cancel |
+| `--order-type` | No | Order type: `limit_order` (limit order) / `smart_trade` (mixed strategy order: take-profit, stop-loss, trailing take-profit, trailing stop-loss) |
+| `--close-sell-model` | No | Sell model when closing the order |
+
+---
 
 ## Notes
 
@@ -564,6 +618,11 @@ gmgn-cli order strategy cancel \
 - `--amount` is in the **smallest unit** (e.g., lamports for SOL)
 - `order strategy create`, `order strategy list`, and `order strategy cancel` use critical auth (require `GMGN_PRIVATE_KEY`)
 - Use `--raw` to get single-line JSON for further processing
+- **Chain restrictions for fee flags** — see the `Chain` column in each parameter table above. `--priority-fee` and `--tip-fee` are SOL/BSC only; `--gas-price`, `--max-fee-per-gas`, `--max-priority-fee-per-gas` are BSC/BASE/ETH only; `--gas-level` and `--auto-fee` are ETH only. The server returns 400 if a chain-restricted flag is sent on the wrong chain.
+- **EIP-1559 minimum values per chain:**
+  - BSC: `max_fee_per_gas` and `max_priority_fee_per_gas` min 50 000 000 wei (≈ 0.05 gwei); passing `"0"` returns 400
+  - BASE / ETH: `max_fee_per_gas` and `max_priority_fee_per_gas` min 200 000 wei
+  - EIP-1559 clamping applies only when `--condition-orders` is present (swap / multi-swap) or on every request (strategy/create)
 
 ## Input Validation
 

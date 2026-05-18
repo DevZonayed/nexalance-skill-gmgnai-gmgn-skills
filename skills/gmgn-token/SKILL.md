@@ -18,7 +18,7 @@ Use the `gmgn-cli` tool to query token information based on the user's request.
 
 - **Token address** — The on-chain contract address that uniquely identifies a token on its chain. Required for all token sub-commands. Format: base58 (SOL) or `0x...` hex (BSC/Base).
 - **Chain** — The blockchain network: `sol` = Solana, `bsc` = BNB Smart Chain, `base` = Base (Coinbase L2), `eth` = Ethereum mainnet.
-- **Market cap** — Not returned directly by `token info`. Calculate as `price × circulating_supply` (both are top-level fields in the response, already in human-readable units).
+- **Market cap** — Not returned directly by `token info`. Calculate as `price.price × circulating_supply` (`price` is a nested object; use `price.price` for the current USD price string).
 - **Liquidity** — USD value of token reserves in the main trading pool. Low liquidity (< $10k) means high price impact / slippage when buying or selling.
 - **Holder** — A wallet that currently holds the token. `token holders` returns wallets ranked by current balance.
 - **Trader** — Any wallet that has transacted with the token (bought or sold), regardless of current holdings. `token traders` covers both current holders and past traders.
@@ -34,7 +34,7 @@ Use the `gmgn-cli` tool to query token information based on the user's request.
 
 | Sub-command | Description |
 |-------------|-------------|
-| `token info` | Basic info + realtime price, liquidity, market cap, total supply, holder count, social links (market cap = price × circulating_supply) |
+| `token info` | Basic info + realtime price, liquidity, market cap, total supply, holder count, social links (market cap = price.price × circulating_supply) |
 | `token security` | Security metrics (honeypot, taxes, holder concentration, contract risks) |
 | `token pool` | Liquidity pool info (DEX, reserves, liquidity depth) |
 | `token holders` | Top token holders list with profit/loss breakdown |
@@ -162,7 +162,7 @@ The response has five nested objects: `pool`, `dev`, `link`, `stat`, `wallet_tag
 | `total_supply` | Total token supply (same as `circulating_supply` for most tokens) |
 | `circulating_supply` | Circulating supply |
 | `max_supply` | Maximum supply |
-| `price` | Current price in USD |
+| `price` | **Object** — price and trading stats (see `price` Object below). Access current price as `price.price`. |
 | `liquidity` | Total liquidity in USD (from biggest pool) |
 | `holder_count` | Number of unique token holders |
 | `logo` | Token logo image URL |
@@ -273,6 +273,57 @@ The response has five nested objects: `pool`, `dev`, `link`, `stat`, `wallet_tag
 | `wallet_tags_stat.whale_wallets` | Number of whale wallets |
 | `wallet_tags_stat.fresh_wallets` | Number of fresh wallets |
 | `wallet_tags_stat.top_wallets` | Number of top-ranked wallets |
+
+**`price` Object** — Price and trading statistics (access current price via `price.price`)
+
+| Field | Description |
+|-------|-------------|
+| `price.price` | Current price in USD (string) |
+| `price.price_{window}` | Price at the start of the window; windows: `1m`, `5m`, `1h`, `6h`, `24h` |
+| `price.buys_{window}` | Buy transaction count in the window |
+| `price.sells_{window}` | Sell transaction count in the window |
+| `price.volume_{window}` | Total trading volume in USD for the window |
+| `price.buy_volume_{window}` | Buy volume in USD for the window |
+| `price.sell_volume_{window}` | Sell volume in USD for the window |
+| `price.swaps_{window}` | Total swap count for the window |
+| `price.hot_level` | Heat level integer |
+
+**`fee_distribution` Object** — Launchpad fee-sharing config (optional; present for `pump` / `bankr` tokens)
+
+| Field | Description |
+|-------|-------------|
+| `fee_distribution.launchpad` | Launchpad identifier: `"pump"`, `"bankr"`, or `""` (unknown) |
+| `fee_distribution.platform_data` | Platform-specific fee config; structure varies by `launchpad` (see below) |
+
+When `fee_distribution.launchpad = "pump"`:
+
+| Field | Description |
+|-------|-------------|
+| `platform_data.fee_authority` | Fee authority wallet address |
+| `platform_data.is_locked` | Whether the fee config is locked |
+| `platform_data.show` | Whether fee distribution is displayed in the UI |
+| `platform_data.list` | Array of fee-share holders (see FeeShareHolder below) |
+| `platform_data.bonus_category` | Bonus category list (e.g. `creator_reward`, `cashback`) |
+
+When `fee_distribution.launchpad = "bankr"`:
+
+| Field | Description |
+|-------|-------------|
+| `platform_data.deployer` | Original deployer wallet address |
+| `platform_data.fee_recipient` | Fee recipient wallet address |
+| `platform_data.list` | Array of fee-share holders (see FeeShareHolder below) |
+
+FeeShareHolder fields (each item in `platform_data.list`):
+
+| Field | Description |
+|-------|-------------|
+| `wallet` | Wallet address |
+| `royalty_bps` | Royalty share in basis points (10000 = 100%) |
+| `is_creator` | Whether this is the original creator |
+| `has_claimed_fee` | Whether fees have been claimed |
+| `username` | Display name |
+| `pfp` | Avatar URL |
+| `twitter_username` | Twitter / X username |
 
 ---
 
@@ -629,7 +680,7 @@ Present as a concise card. Do not dump raw JSON.
 
 ```
 {symbol} ({name})
-Price: ${price}  |  Market Cap: ~${price × circulating_supply}  |  Liquidity: ${liquidity}
+Price: ${price.price}  |  Market Cap: ~${price.price × circulating_supply}  |  Liquidity: ${liquidity}
 Holders: {holder_count}  |  Smart Money: {wallet_tags_stat.smart_wallets}  |  KOLs: {wallet_tags_stat.renowned_wallets}
 Social: @{link.twitter_username}  |  {link.website}  |  {link.telegram}
 ```
@@ -672,7 +723,7 @@ Show top rows only. Highlight wallets tagged `kol`, `smart_degen`, or flagged `b
 
 ## Notes
 
-- **Market cap is not returned directly** — calculate it as `price × circulating_supply` (both fields are top-level; `circulating_supply` is already in human-readable token units, no decimal adjustment needed). Example: `price=3.11` × `circulating_supply=999999151` ≈ $3.11B market cap.
+- **Market cap is not returned directly** — calculate it as `price.price × circulating_supply` (`price` is now a nested object; use `price.price` for the current USD price string, and `circulating_supply` is a top-level field already in human-readable token units). Example: `price.price="3.11"` × `circulating_supply=999999151` ≈ $3.11B market cap.
 - **Trading volume (1h, 24h, etc.) is not included in `token info`** — to get volume or OHLCV data, use the `gmgn-market` skill and query K-line data: `gmgn-cli market kline --chain <chain> --address <token_address> --resolution <1m|5m|15m|1h|4h|1d>`. See the `gmgn-market` SKILL.md for full details.
 - All token commands use normal auth (API Key only, no signature required)
 - Use `--raw` to get single-line JSON for further processing

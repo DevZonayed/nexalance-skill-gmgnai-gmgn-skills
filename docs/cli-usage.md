@@ -463,7 +463,6 @@ npx gmgn-cli swap \
   [--anti-mev] \
   [--priority-fee <sol>] \
   [--tip-fee <amount>] \
-  [--max-auto-fee <amount>] \
   [--gas-price <gwei>] \
   [--max-fee-per-gas <amount>] \
   [--max-priority-fee-per-gas <amount>] \
@@ -472,26 +471,27 @@ npx gmgn-cli swap \
   [--raw]
 ```
 
-| Option | Required | Description |
-|--------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` |
-| `--from` | Yes | Wallet address (must match the wallet bound to the API Key) |
-| `--input-token` | Yes | Input token contract address |
-| `--output-token` | Yes | Output token contract address |
-| `--amount` | No* | Input raw amount in minimal unit (e.g., lamports for SOL); required unless `--percent` is used |
-| `--percent` | No* | Input amount as a percentage, e.g. `50` = 50%; required unless `--amount` is used; only valid when input token is not a currency (not SOL/BNB/ETH/USDC) |
-| `--slippage` | No | Slippage tolerance, e.g. `0.01` = 1% |
-| `--auto-slippage` | No | Enable automatic slippage |
-| `--min-output` | No | Minimum output amount (raw amount) |
-| `--anti-mev` | No | Enable anti-MEV protection (default true) |
-| `--priority-fee` | No | Priority fee in SOL (≥ 0.00001 SOL, SOL only) |
-| `--tip-fee` | No | Tip fee (SOL ≥ 0.00001 SOL / BSC ≥ 0.000001 BNB) |
-| `--max-auto-fee` | No | Max automatic fee cap |
-| `--gas-price` | No | Gas price in gwei (BSC ≥ 0.05 gwei / BASE/ETH ≥ 0.01 gwei) |
-| `--max-fee-per-gas` | No | EIP-1559 max fee per gas (Base/ETH only) |
-| `--max-priority-fee-per-gas` | No | EIP-1559 max priority fee per gas (Base/ETH only) |
-| `--condition-orders` | No | JSON array of take-profit/stop-loss conditions attached after a successful swap (see example below); only `profit_stop` and `loss_stop` are supported |
-| `--sell-ratio-type` | No | Sell ratio base for `--condition-orders`: `buy_amount` (default) / `hold_amount` |
+| Option | Required | Chain | Description |
+|--------|----------|-------|-------------|
+| `--chain` | Yes | all | `sol` / `bsc` / `base` / `eth` |
+| `--from` | Yes | all | Wallet address (must match the wallet bound to the API Key) |
+| `--input-token` | Yes | all | Input token contract address |
+| `--output-token` | Yes | all | Output token contract address |
+| `--amount` | No* | all | Input raw amount in minimal unit (e.g., lamports for SOL); required unless `--percent` is used |
+| `--percent` | No* | all | Input amount as a percentage, e.g. `50` = 50%; required unless `--amount` is used; only valid when input token is not a currency (not SOL/BNB/ETH/USDC) |
+| `--slippage` | No | all | Slippage tolerance, e.g. `0.01` = 1% |
+| `--auto-slippage` | No | all | Enable automatic slippage |
+| `--min-output` | No | all | Minimum output amount (raw amount) |
+| `--anti-mev` | No | all | Enable anti-MEV protection (default true) |
+| `--priority-fee` | No | `sol` | Priority fee in SOL (≥ 0.00001) |
+| `--tip-fee` | No | `sol` / `bsc` | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB) |
+| `--gas-price` | No | `bsc` / `base` / `eth` | Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01) |
+| `--gas-level` | No | `eth` | Gas price tier: `low` / `average` / `high`. Mutually exclusive with `--gas-price`. |
+| `--auto-fee` | No | `eth` | Auto fee mode — delegates fee selection to the trading bot for `--condition-orders` strategy |
+| `--max-fee-per-gas` | No | `bsc` / `base` / `eth` | EIP-1559 max fee per gas |
+| `--max-priority-fee-per-gas` | No | `bsc` / `base` / `eth` | EIP-1559 max priority fee per gas |
+| `--condition-orders` | No | all | JSON array of take-profit/stop-loss conditions attached after a successful swap (see example below) |
+| `--sell-ratio-type` | No | all | Sell ratio base for `--condition-orders`: `buy_amount` (default) / `hold_amount` |
 
 **`--condition-orders` example** (100% sell at 2× price, 100% sell at 50% price):
 
@@ -540,8 +540,6 @@ gmgn-cli multi-swap \
   [--anti-mev] \
   [--priority-fee <sol>] \
   [--tip-fee <amount>] \
-  [--auto-tip-fee] \
-  [--max-auto-fee <amount>] \
   [--gas-price <gwei>] \
   [--max-fee-per-gas <amount>] \
   [--max-priority-fee-per-gas <amount>] \
@@ -550,27 +548,27 @@ gmgn-cli multi-swap \
   [--raw]
 ```
 
-| Option | Required | Description |
-|--------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` |
-| `--accounts` | Yes | Comma-separated wallet addresses (1–100, all bound to API Key) |
-| `--input-token` | Yes | Input token contract address |
-| `--output-token` | Yes | Output token contract address |
-| `--input-amount` | No* | JSON map `{"addr":"amount"}` in smallest unit; one of the three amount fields is required |
-| `--input-amount-bps` | No* | JSON map `{"addr":"bps"}` where 5000 = 50%; only valid when input token is not a currency |
-| `--output-amount` | No* | JSON map `{"addr":"amount"}` target output in smallest unit |
-| `--slippage` | No | Slippage tolerance, e.g. `0.01` = 1% |
-| `--auto-slippage` | No | Enable automatic slippage |
-| `--anti-mev` | No | Enable anti-MEV protection |
-| `--priority-fee` | No | Priority fee in SOL (≥ 0.00001, SOL only) |
-| `--tip-fee` | No | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB) |
-| `--auto-tip-fee` | No | Enable automatic tip fee |
-| `--max-auto-fee` | No | Max automatic fee cap |
-| `--gas-price` | No | Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01) |
-| `--max-fee-per-gas` | No | EIP-1559 max fee per gas (Base only) |
-| `--max-priority-fee-per-gas` | No | EIP-1559 max priority fee per gas (Base only) |
-| `--condition-orders` | No | JSON array of take-profit/stop-loss conditions, attached to each successful wallet's swap (best-effort) |
-| `--sell-ratio-type` | No | Sell ratio base: `buy_amount` (default) / `hold_amount` |
+| Option | Required | Chain | Description |
+|--------|----------|-------|-------------|
+| `--chain` | Yes | all | `sol` / `bsc` / `base` / `eth` |
+| `--accounts` | Yes | all | Comma-separated wallet addresses (1–100, all bound to API Key) |
+| `--input-token` | Yes | all | Input token contract address |
+| `--output-token` | Yes | all | Output token contract address |
+| `--input-amount` | No* | all | JSON map `{"addr":"amount"}` in smallest unit; one of the three amount fields is required |
+| `--input-amount-bps` | No* | all | JSON map `{"addr":"bps"}` where 5000 = 50%; only valid when input token is not a currency |
+| `--output-amount` | No* | all | JSON map `{"addr":"amount"}` target output in smallest unit |
+| `--slippage` | No | all | Slippage tolerance, e.g. `0.01` = 1% |
+| `--auto-slippage` | No | all | Enable automatic slippage |
+| `--anti-mev` | No | all | Enable anti-MEV protection |
+| `--priority-fee` | No | `sol` | Priority fee in SOL (≥ 0.00001) |
+| `--tip-fee` | No | `sol` / `bsc` | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB) |
+| `--gas-price` | No | `bsc` / `base` / `eth` | Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01) |
+| `--gas-level` | No | `eth` | Gas price tier: `low` / `average` / `high`. Mutually exclusive with `--gas-price`. |
+| `--auto-fee` | No | `eth` | Auto fee mode — delegates fee selection to the trading bot for `--condition-orders` strategy |
+| `--max-fee-per-gas` | No | `bsc` / `base` / `eth` | EIP-1559 max fee per gas |
+| `--max-priority-fee-per-gas` | No | `bsc` / `base` / `eth` | EIP-1559 max priority fee per gas |
+| `--condition-orders` | No | all | JSON array of take-profit/stop-loss conditions, attached to each successful wallet's swap (best-effort) |
+| `--sell-ratio-type` | No | all | Sell ratio base: `buy_amount` (default) / `hold_amount` |
 
 **Response fields (data):** Array of per-wallet results:
 
