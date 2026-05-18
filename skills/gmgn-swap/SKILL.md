@@ -24,7 +24,7 @@ Use the `gmgn-cli` tool to submit a token swap or query an existing order. `GMGN
 
 - **Currency tokens** — Each chain has designated currency tokens (SOL, BNB, ETH, USDC). These are the base assets used to buy other tokens or receive swap proceeds. Their contract addresses are fixed — look them up in the Chain Currencies table, never guess them.
 
-- **Anti-MEV** — MEV (Miner/Maximal Extractable Value) refers to frontrunning and sandwich attacks where bots exploit pending transactions. `--anti-mev` routes the transaction through protected channels to reduce this risk. **Recommended: always enable.** Default: on.
+- **Anti-MEV** — MEV (Miner/Maximal Extractable Value) refers to frontrunning and sandwich attacks where bots exploit pending transactions. `--anti-mev` routes the transaction through protected channels to reduce this risk. **Recommended: always enable.** Default: on. **Not supported on `base` chain.**
 
 - **Critical auth** — `swap` and all `order` subcommands require both `GMGN_API_KEY` and `GMGN_PRIVATE_KEY`. The private key never leaves the machine — the CLI uses it only for local signing and sends only the resulting signature.
 
@@ -184,7 +184,7 @@ gmgn-cli swap \
 | `--slippage <n>` | No | all | Slippage tolerance, e.g. `0.01` = 1%. **Mutually exclusive with `--auto-slippage`** — use one or the other. |
 | `--auto-slippage` | No | all | Enable automatic slippage. **Mutually exclusive with `--slippage`.** |
 | `--min-output <n>` | No | all | Minimum output amount |
-| `--anti-mev` | No | all | Enable anti-MEV protection — **recommended**; protects against frontrunning and sandwich attacks. Default: on |
+| `--anti-mev` | No | sol / bsc / eth | Enable anti-MEV protection — **recommended**; protects against frontrunning and sandwich attacks. Default: on. **Not supported on `base`.** |
 | `--priority-fee <sol>` | No | `sol` | Priority fee in SOL (≥ 0.00001). Required when using `--condition-orders` on SOL. |
 | `--tip-fee <n>` | No | `sol` / `bsc` | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB). Required when using `--condition-orders` on SOL. |
 | `--gas-price <gwei>` | No | `bsc` / `base` / `eth` | Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01). Required when using `--condition-orders` on BSC. Mutually exclusive with `--gas-level`. |
@@ -402,7 +402,7 @@ gmgn-cli multi-swap \
 | `--output-amount` | No* | all | JSON map of `wallet_address → target output amount` (smallest unit). |
 | `--slippage <n>` | No | all | Slippage tolerance, e.g. `0.01` = 1%. Mutually exclusive with `--auto-slippage`. |
 | `--auto-slippage` | No | all | Enable automatic slippage. |
-| `--anti-mev` | No | all | Enable anti-MEV protection. |
+| `--anti-mev` | No | sol / bsc / eth | Enable anti-MEV protection. Not supported on `base`. |
 | `--priority-fee <sol>` | No | `sol` | Priority fee in SOL (≥ 0.00001). Required when using `--condition-orders` on SOL. |
 | `--tip-fee <amount>` | No | `sol` / `bsc` | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB). Required when using `--condition-orders` on SOL. |
 | `--gas-price <gwei>` | No | `bsc` / `base` / `eth` | Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01). Required when using `--condition-orders` on BSC. Mutually exclusive with `--gas-level`. |
@@ -540,7 +540,7 @@ gmgn-cli order strategy create \
 | `--gas-level` | No | `eth` | Gas price tier: `low` / `average` / `high`. Mutually exclusive with `--gas-price`. |
 | `--max-fee-per-gas` | No | `bsc` / `base` / `eth` | EIP-1559 max fee per gas. Clamped per chain minimums. |
 | `--max-priority-fee-per-gas` | No | `bsc` / `base` / `eth` | EIP-1559 max priority fee per gas. Clamped per chain minimums; capped to `--max-fee-per-gas`. |
-| `--anti-mev` | No | all | Enable anti-MEV protection |
+| `--anti-mev` | No | sol / bsc / eth | Enable anti-MEV protection. Not supported on `base`. |
 
 ### `order strategy create` Response Fields
 
