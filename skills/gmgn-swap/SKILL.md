@@ -478,13 +478,31 @@ gmgn-cli gas-price --chain sol
 
 ### `gas-price` Response Fields
 
-| Field              | Type   | Description |
-| ------------------ | ------ | ---- |
-| `chain`            | string | Chain identifier |
-| `suggest_base_fee` | string | Suggested base fee (gwei) |
-| `low`              | string | Low-priority gas price (gwei) |
-| `average`          | string | Average-priority gas price (gwei) |
-| `high`             | string | High-priority gas price (gwei) |
+All fields are omitempty — fields unsupported by a chain are omitted. Units are chain-native (wei for EVM chains; lamports / chain-native for SOL).
+
+| Field                    | Type    | Description |
+| ------------------------ | ------- | ----------- |
+| `chain`                  | string  | Chain identifier |
+| `auto`                   | string  | Automatic gas price |
+| `auto_mev`               | string  | Anti-MEV automatic gas price |
+| `last_block`             | int64   | Latest block number |
+| `high`                   | string  | High-priority gas price |
+| `average`                | string  | Average-priority gas price |
+| `low`                    | string  | Low-priority gas price |
+| `suggest_base_fee`       | string  | Suggested base fee |
+| `high_prio_fee`          | string  | High-priority fee |
+| `average_prio_fee`       | string  | Average-priority fee |
+| `low_prio_fee`           | string  | Low-priority fee |
+| `high_prio_fee_mixed`    | string  | High mixed priority fee |
+| `average_prio_fee_mixed` | string  | Average mixed priority fee |
+| `low_prio_fee_mixed`     | string  | Low mixed priority fee |
+| `native_token_usd_price` | float32 | Native token USD price |
+| `high_estimate_time`     | int64   | Estimated confirmation time for high tier (seconds) |
+| `average_estimate_time`  | int64   | Estimated confirmation time for average tier (seconds) |
+| `low_estimate_time`      | int64   | Estimated confirmation time for low tier (seconds) |
+| `high_orign`             | string  | High-priority raw origin value |
+| `average_orign`          | string  | Average-priority raw origin value |
+| `low_orign`              | string  | Low-priority raw origin value |
 
 ---
 
