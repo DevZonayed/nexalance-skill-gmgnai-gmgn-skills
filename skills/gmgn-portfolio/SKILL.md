@@ -360,7 +360,7 @@ Show the `[Identity: ...]` line only if `common` is present in the response. For
 
 ## Notes
 
-- All portfolio commands use normal auth (API Key only, no signature required)
+- All portfolio commands use exist auth (API Key only, no signature required)
 - `portfolio stats` supports multiple `--wallet` flags for batch queries
 - Use `--raw` to get single-line JSON for further processing
 - **Input validation** — Wallet and token addresses are validated against the expected chain format at runtime (sol: base58 32–44 chars; bsc/base/eth: `0x` + 40 hex digits). The CLI exits with an error on invalid input.

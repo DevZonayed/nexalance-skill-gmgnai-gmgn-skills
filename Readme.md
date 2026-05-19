@@ -557,7 +557,7 @@ gmgn-cli order quote \
   --amount 1000000 \
   --slippage 0.01
 
-# Quotes use critical auth and require GMGN_PRIVATE_KEY on every chain
+# Quotes use signed auth and require GMGN_PRIVATE_KEY on every chain
 gmgn-cli order quote \
   --chain bsc \
   --from <wallet-address> \
@@ -579,7 +579,7 @@ gmgn-cli multi-swap \
   --slippage 0.01
 ```
 
-> `order quote` uses critical auth on `sol` / `bsc` / `base` / `eth` and requires `GMGN_PRIVATE_KEY`.
+> `order quote` uses signed auth on `sol` / `bsc` / `base` / `eth` and requires `GMGN_PRIVATE_KEY`.
 
 ### Swap with Take-Profit / Stop-Loss Orders (requires private key)
 

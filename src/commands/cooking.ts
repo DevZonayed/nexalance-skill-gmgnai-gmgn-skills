@@ -9,7 +9,7 @@ export function registerCookingCommands(program: Command): void {
 
   cooking
     .command("stats")
-    .description("Get token creation statistics by launchpad (normal auth)")
+    .description("Get token creation statistics by launchpad (exist auth)")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
       const client = new OpenApiClient(getConfig());

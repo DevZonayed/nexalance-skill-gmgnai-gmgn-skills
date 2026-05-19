@@ -26,7 +26,7 @@ Use the `gmgn-cli` tool to submit a token swap or query an existing order. `GMGN
 
 - **Anti-MEV** — MEV (Miner/Maximal Extractable Value) refers to frontrunning and sandwich attacks where bots exploit pending transactions. `--anti-mev` routes the transaction through protected channels to reduce this risk. **Recommended: always enable.** Default: on. **Not supported on `base` chain.**
 
-- **Critical auth** — `swap` and all `order` subcommands require both `GMGN_API_KEY` and `GMGN_PRIVATE_KEY`. The private key never leaves the machine — the CLI uses it only for local signing and sends only the resulting signature.
+- **Signed auth** — `swap` and all `order` subcommands require both `GMGN_API_KEY` and `GMGN_PRIVATE_KEY`. The private key never leaves the machine — the CLI uses it only for local signing and sends only the resulting signature.
 
 - **`order_id` / `status`** — After submitting a swap, the response includes an `order_id`. Use `order get --order-id` to poll for final status. Possible values: `pending` → `processed` → `confirmed` (success) or `failed` / `expired`. Do not report success until status is `confirmed`.
 
@@ -47,9 +47,9 @@ Use the `gmgn-cli` tool to submit a token swap or query an existing order. `GMGN
 |-------------|-------------|
 | `swap` | Submit a token swap |
 | `multi-swap` | Submit token swaps across multiple wallets concurrently (up to 100) |
-| `order quote` | Get a swap quote (no transaction submitted; requires critical auth) |
+| `order quote` | Get a swap quote (no transaction submitted; requires signed auth) |
 | `order get` | Query order status |
-| `gas-price` | Query recommended gas price (low / average / high tiers) for any chain; normal auth |
+| `gas-price` | Query recommended gas price (low / average / high tiers) for any chain; exist auth (API Key only) |
 | `order strategy create` | Create a limit/strategy order (requires private key) |
 | `order strategy list` | List strategy orders (requires private key) |
 | `order strategy cancel` | Cancel a strategy order (requires private key) |
@@ -291,7 +291,7 @@ gmgn-cli swap \
 
 ### Pre-swap Confirmation
 
-Before displaying the confirmation, run `order quote` to get the estimated output (requires critical auth and `GMGN_PRIVATE_KEY` on every supported quote chain):
+Before displaying the confirmation, run `order quote` to get the estimated output (requires signed auth and `GMGN_PRIVATE_KEY` on every supported quote chain):
 
 ```bash
 gmgn-cli order quote \
@@ -430,7 +430,7 @@ The response `data` is an array — one element per wallet:
 
 ## `order quote` Usage
 
-Get an estimated output amount before submitting a swap. All supported quote chains use critical auth and require `GMGN_PRIVATE_KEY`.
+Get an estimated output amount before submitting a swap. All supported quote chains use signed auth and require `GMGN_PRIVATE_KEY`.
 
 ```bash
 gmgn-cli order quote \
@@ -467,7 +467,7 @@ Response fields are shared with `swap` — see [`swap` / `order get` Response Fi
 
 ## `gas-price` Usage
 
-Query recommended gas price tiers for any chain. Uses normal auth (API Key only — no private key required).
+Query recommended gas price tiers for any chain. API Key only — no signature or private key required.
 
 ```bash
 gmgn-cli gas-price --chain eth
@@ -632,10 +632,10 @@ gmgn-cli order strategy cancel \
 
 ## Notes
 
-- Swap uses **critical auth** (API Key + signature) — CLI handles signing automatically, no manual processing needed
+- Swap uses **signed auth** (API Key + signature) — CLI handles signing automatically, no manual processing needed
 - After submitting a swap, use `order get` to poll for confirmation
 - `--amount` is in the **smallest unit** (e.g., lamports for SOL)
-- `order strategy create`, `order strategy list`, and `order strategy cancel` use critical auth (require `GMGN_PRIVATE_KEY`)
+- `order strategy create`, `order strategy list`, and `order strategy cancel` use signed auth (require `GMGN_PRIVATE_KEY`)
 - Use `--raw` to get single-line JSON for further processing
 - **Chain restrictions for fee flags** — see the `Chain` column in each parameter table above. `--priority-fee` and `--tip-fee` are SOL/BSC only; `--gas-price`, `--max-fee-per-gas`, `--max-priority-fee-per-gas` are BSC/BASE/ETH only; `--gas-level` and `--auto-fee` are ETH only. The server returns 400 if a chain-restricted flag is sent on the wrong chain. (`gas-price` itself supports all four chains including `sol`.)
 - **EIP-1559 minimum values per chain:**
@@ -680,7 +680,7 @@ For full token research before swapping, see [`docs/workflow-token-research.md`]
 
 ## Execution Guidelines
 
-- **[REQUIRED] Token security check** — Run before every swap. See **Pre-Swap Safety Check (REQUIRED)** section above. Uses normal auth (API Key only — no private key needed for this step).
+- **[REQUIRED] Token security check** — Run before every swap. See **Pre-Swap Safety Check (REQUIRED)** section above. Uses exist auth (API Key only — no private key needed for this step).
 - **Currency resolution** — When the user names a currency (SOL/BNB/ETH/USDC) instead of providing an address, look up its address in the Chain Currencies table and apply it automatically — never ask the user for it.
   - Buy ("buy X SOL of TOKEN", "spend 0.5 USDC on TOKEN") → resolve currency to `--input-token`
   - Sell ("sell TOKEN for SOL", "sell 50% of TOKEN to USDC") → resolve currency to `--output-token`

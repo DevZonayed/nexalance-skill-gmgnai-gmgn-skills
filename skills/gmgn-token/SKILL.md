@@ -725,7 +725,7 @@ Show top rows only. Highlight wallets tagged `kol`, `smart_degen`, or flagged `b
 
 - **Market cap is not returned directly** — calculate it as `price.price × circulating_supply` (`price` is now a nested object; use `price.price` for the current USD price string, and `circulating_supply` is a top-level field already in human-readable token units). Example: `price.price="3.11"` × `circulating_supply=999999151` ≈ $3.11B market cap.
 - **Trading volume (1h, 24h, etc.) is not included in `token info`** — to get volume or OHLCV data, use the `gmgn-market` skill and query K-line data: `gmgn-cli market kline --chain <chain> --address <token_address> --resolution <1m|5m|15m|1h|4h|1d>`. See the `gmgn-market` SKILL.md for full details.
-- All token commands use normal auth (API Key only, no signature required)
+- All token commands use exist auth (API Key only, no signature required)
 - Use `--raw` to get single-line JSON for further processing
 - `--tag` applies to both `holders` and `traders` and filters to only wallets with that tag — if few results are returned, try the other tag value
 - `amount_percentage` in holders/traders is a ratio (0–1), not a percentage — `0.05` means 5% of supply
