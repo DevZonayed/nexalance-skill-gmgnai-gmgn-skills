@@ -73,55 +73,6 @@ export function registerSwapCommands(program: Command): void {
       printResult(data, opts.raw);
     });
 
-  const order = program.command("order").description("Order management commands");
-
-  order
-    .command("quote")
-    .description("Get a swap quote without submitting a transaction (requires critical auth)")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth (requires GMGN_PRIVATE_KEY)")
-    .requiredOption("--from <address>", "Wallet address (must match API Key binding)")
-    .requiredOption("--input-token <address>", "Input token contract address")
-    .requiredOption("--output-token <address>", "Output token contract address")
-    .requiredOption("--amount <amount>", "Input amount (smallest unit)")
-    .requiredOption("--slippage <n>", "Slippage tolerance (e.g. 0.01 = 1%)", parseFloat)
-    .option("--raw", "Output raw JSON")
-    .action(async (opts) => {
-      validateChain(opts.chain);
-      validateAddress(opts.from, opts.chain, "--from");
-      validateAddress(opts.inputToken, opts.chain, "--input-token");
-      validateAddress(opts.outputToken, opts.chain, "--output-token");
-      validatePositiveInt(opts.amount, "--amount");
-      const client = new OpenApiClient(getConfig(true));
-      const data = await client
-        .quoteOrder(opts.chain, opts.from, opts.inputToken, opts.outputToken, opts.amount, opts.slippage)
-        .catch(exitOnError);
-      printResult(data, opts.raw);
-    });
-
-  order
-    .command("get")
-    .description("Query order status (requires private key)")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / monad")
-    .requiredOption("--order-id <id>", "Order ID")
-    .option("--raw", "Output raw JSON")
-    .action(async (opts) => {
-      validateChain(opts.chain);
-      const client = new OpenApiClient(getConfig(true));
-      const data = await client.queryOrder(opts.orderId, opts.chain).catch(exitOnError);
-      printResult(data, opts.raw);
-    });
-
-  order
-    .command("gas-price")
-    .description("Query recommended EVM gas price (normal auth; eth / bsc / base)")
-    .requiredOption("--chain <chain>", "EVM chain: eth / bsc / base")
-    .option("--raw", "Output raw JSON")
-    .action(async (opts) => {
-      const client = new OpenApiClient(getConfig(false));
-      const data = await client.getGasPrice(opts.chain).catch(exitOnError);
-      printResult(data, opts.raw);
-    });
-
   program
     .command("multi-swap")
     .description("Submit token swaps across multiple wallets concurrently (up to 100 wallets)")
@@ -191,6 +142,55 @@ export function registerSwapCommands(program: Command): void {
       if (opts.sellRatioType) params.sell_ratio_type = opts.sellRatioType;
       const client = new OpenApiClient(getConfig(true));
       const data = await client.multiSwap(params).catch(exitOnError);
+      printResult(data, opts.raw);
+    });
+
+  const order = program.command("order").description("Order management commands");
+
+  order
+    .command("quote")
+    .description("Get a swap quote without submitting a transaction (requires critical auth)")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth (requires GMGN_PRIVATE_KEY)")
+    .requiredOption("--from <address>", "Wallet address (must match API Key binding)")
+    .requiredOption("--input-token <address>", "Input token contract address")
+    .requiredOption("--output-token <address>", "Output token contract address")
+    .requiredOption("--amount <amount>", "Input amount (smallest unit)")
+    .requiredOption("--slippage <n>", "Slippage tolerance (e.g. 0.01 = 1%)", parseFloat)
+    .option("--raw", "Output raw JSON")
+    .action(async (opts) => {
+      validateChain(opts.chain);
+      validateAddress(opts.from, opts.chain, "--from");
+      validateAddress(opts.inputToken, opts.chain, "--input-token");
+      validateAddress(opts.outputToken, opts.chain, "--output-token");
+      validatePositiveInt(opts.amount, "--amount");
+      const client = new OpenApiClient(getConfig(true));
+      const data = await client
+        .quoteOrder(opts.chain, opts.from, opts.inputToken, opts.outputToken, opts.amount, opts.slippage)
+        .catch(exitOnError);
+      printResult(data, opts.raw);
+    });
+
+  order
+    .command("get")
+    .description("Query order status (requires private key)")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / monad")
+    .requiredOption("--order-id <id>", "Order ID")
+    .option("--raw", "Output raw JSON")
+    .action(async (opts) => {
+      validateChain(opts.chain);
+      const client = new OpenApiClient(getConfig(true));
+      const data = await client.queryOrder(opts.orderId, opts.chain).catch(exitOnError);
+      printResult(data, opts.raw);
+    });
+
+  program
+    .command("gas-price")
+    .description("Query recommended gas price tiers for any chain (normal auth; eth / bsc / base / sol)")
+    .requiredOption("--chain <chain>", "Chain: eth / bsc / base / sol")
+    .option("--raw", "Output raw JSON")
+    .action(async (opts) => {
+      const client = new OpenApiClient(getConfig(false));
+      const data = await client.getGasPrice(opts.chain).catch(exitOnError);
       printResult(data, opts.raw);
     });
 
