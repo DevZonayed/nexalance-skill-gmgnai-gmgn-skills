@@ -487,11 +487,11 @@ npx gmgn-cli swap \
 | `--tip-fee` | No | `sol` / `bsc` | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB) |
 | `--gas-price` | No | `bsc` / `base` / `eth` | Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01) |
 | `--gas-level` | No | `eth` | Gas price tier: `low` / `average` / `high`. Mutually exclusive with `--gas-price`. |
-| `--auto-fee` | No | `eth` | Auto fee mode — delegates fee selection to the trading bot for `--condition-orders` strategy |
+| `--auto-fee` | No | `eth` | **Only with `--condition-orders`.** GMGN automatically selects the optimal fee. |
 | `--max-fee-per-gas` | No | `bsc` / `base` / `eth` | EIP-1559 max fee per gas |
 | `--max-priority-fee-per-gas` | No | `bsc` / `base` / `eth` | EIP-1559 max priority fee per gas |
 | `--condition-orders` | No | all | JSON array of take-profit/stop-loss conditions attached after a successful swap (see example below) |
-| `--sell-ratio-type` | No | all | Sell ratio base for `--condition-orders`: `buy_amount` (default) / `hold_amount` |
+| `--sell-ratio-type` | No | all | **Only with `--condition-orders`.** Sell ratio base: `buy_amount` (default) / `hold_amount` |
 
 **`--condition-orders` example** (100% sell at 2× price, 100% sell at 50% price):
 
@@ -564,11 +564,11 @@ gmgn-cli multi-swap \
 | `--tip-fee` | No | `sol` / `bsc` | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB) |
 | `--gas-price` | No | `bsc` / `base` / `eth` | Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01) |
 | `--gas-level` | No | `eth` | Gas price tier: `low` / `average` / `high`. Mutually exclusive with `--gas-price`. |
-| `--auto-fee` | No | `eth` | Auto fee mode — delegates fee selection to the trading bot for `--condition-orders` strategy |
+| `--auto-fee` | No | `eth` | **Only with `--condition-orders`.** GMGN automatically selects the optimal fee. |
 | `--max-fee-per-gas` | No | `bsc` / `base` / `eth` | EIP-1559 max fee per gas |
 | `--max-priority-fee-per-gas` | No | `bsc` / `base` / `eth` | EIP-1559 max priority fee per gas |
 | `--condition-orders` | No | all | JSON array of take-profit/stop-loss conditions, attached to each successful wallet's swap (best-effort) |
-| `--sell-ratio-type` | No | all | Sell ratio base: `buy_amount` (default) / `hold_amount` |
+| `--sell-ratio-type` | No | all | **Only with `--condition-orders`.** Sell ratio base: `buy_amount` (default) / `hold_amount` |
 
 **Response fields (data):** Array of per-wallet results:
 
@@ -810,5 +810,5 @@ Important notes:
 | `BAD_REQUEST` | 400 | Missing or invalid request parameters |
 | `INTERNAL_API_UNAVAILABLE` | 502 | Downstream market API unavailable |
 | `BROKER_UNAVAILABLE` | 502 | Downstream trade broker unavailable |
-| `TRADING_BOT_UNAVAILABLE` | 502 | Trading bot service unreachable (strategy endpoints) |
+| `TRADING_BOT_UNAVAILABLE` | 502 | Strategy order service temporarily unreachable |
 | `INTERNAL_ERROR` | 500 | Internal server error |

@@ -189,11 +189,11 @@ gmgn-cli swap \
 | `--tip-fee <n>` | No | `sol` / `bsc` | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB). Required when using `--condition-orders` on SOL. |
 | `--gas-price <gwei>` | No | `bsc` / `base` / `eth` | Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01). Required when using `--condition-orders` on BSC. Mutually exclusive with `--gas-level`. |
 | `--gas-level <level>` | No | `eth` | Gas price tier: `low` / `average` / `high`. Mutually exclusive with `--gas-price`. |
-| `--auto-fee` | No | `eth` | Auto fee mode — delegates fee selection to the trading bot for `--condition-orders` strategy. |
+| `--auto-fee` | No | `eth` | **Only with `--condition-orders`.** GMGN automatically selects the optimal fee. |
 | `--max-fee-per-gas <n>` | No | `bsc` / `base` / `eth` | EIP-1559 max fee per gas. Clamped per chain minimums. Defaults to `--gas-price` if omitted (BASE/ETH). |
 | `--max-priority-fee-per-gas <n>` | No | `bsc` / `base` / `eth` | EIP-1559 max priority fee per gas. Clamped per chain minimums; capped to `--max-fee-per-gas`. |
 | `--condition-orders <json>` | No | all | JSON array of condition sub-orders (take-profit / stop-loss) to attach after a successful swap. **Max 10 sub-orders.** Strategy creation is best-effort: if the swap succeeds but strategy creation fails, the swap result is still returned. See ConditionOrder fields below. |
-| `--sell-ratio-type <type>` | No | all | Sell ratio basis for `--condition-orders`: `buy_amount` (default) — when triggered, sells a fixed token amount stored at strategy creation time; `hold_amount` — when triggered, sells a fixed percentage of the position held at trigger time |
+| `--sell-ratio-type <type>` | No | all | **Only with `--condition-orders`.** Sell ratio basis: `buy_amount` (default) — sells a fixed token amount stored at strategy creation time; `hold_amount` — sells a fixed percentage of the position held at trigger time |
 
 ### ConditionOrder Fields (for `--condition-orders`)
 
@@ -407,11 +407,11 @@ gmgn-cli multi-swap \
 | `--tip-fee <amount>` | No | `sol` / `bsc` | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB). Required when using `--condition-orders` on SOL. |
 | `--gas-price <gwei>` | No | `bsc` / `base` / `eth` | Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01). Required when using `--condition-orders` on BSC. Mutually exclusive with `--gas-level`. |
 | `--gas-level <level>` | No | `eth` | Gas price tier: `low` / `average` / `high`. Mutually exclusive with `--gas-price`. |
-| `--auto-fee` | No | `eth` | Auto fee mode — delegates fee selection to the trading bot for `--condition-orders` strategy. |
+| `--auto-fee` | No | `eth` | **Only with `--condition-orders`.** GMGN automatically selects the optimal fee. |
 | `--max-fee-per-gas <amount>` | No | `bsc` / `base` / `eth` | EIP-1559 max fee per gas. Clamped per chain minimums. Defaults to `--gas-price` if omitted (BASE/ETH). |
 | `--max-priority-fee-per-gas <amount>` | No | `bsc` / `base` / `eth` | EIP-1559 max priority fee per gas. Clamped per chain minimums; capped to `--max-fee-per-gas`. |
 | `--condition-orders <json>` | No | all | JSON array of condition sub-orders (take-profit / stop-loss) attached to each successful wallet's swap. Same structure as `swap --condition-orders`. Strategy creation is best-effort per wallet. |
-| `--sell-ratio-type <type>` | No | all | Sell ratio base for `--condition-orders`: `buy_amount` (default) / `hold_amount`. |
+| `--sell-ratio-type <type>` | No | all | **Only with `--condition-orders`.** Sell ratio base: `buy_amount` (default) / `hold_amount`. |
 
 ## `multi-swap` Response Fields
 
@@ -554,7 +554,7 @@ gmgn-cli order strategy create \
 | `--auto-slippage` | No | all | Enable automatic slippage |
 | `--priority-fee` | No | `sol` | Priority fee in SOL (≥ 0.00001). **Required** for SOL. |
 | `--tip-fee` | No | `sol` / `bsc` | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB). **Required** for SOL. |
-| `--auto-fee` | No | `eth` | Auto fee mode — delegates fee selection to the trading bot. |
+| `--auto-fee` | No | `eth` | Auto fee mode — GMGN automatically selects the optimal fee. |
 | `--gas-price` | No | `bsc` / `base` / `eth` | Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01). **Required** for BSC. Mutually exclusive with `--gas-level`. |
 | `--gas-level` | No | `eth` | Gas price tier: `low` / `average` / `high`. Mutually exclusive with `--gas-price`. |
 | `--max-fee-per-gas` | No | `bsc` / `base` / `eth` | EIP-1559 max fee per gas. Clamped per chain minimums. |
