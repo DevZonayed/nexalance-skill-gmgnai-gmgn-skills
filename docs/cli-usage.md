@@ -351,7 +351,7 @@ gmgn-cli market signal --chain sol --groups '<json_array>' [--raw]
 
 ## portfolio follow-wallet
 
-Query follow-wallet trade records. Returns trades from wallets you personally follow on the GMGN platform. The follow list is resolved automatically from the GMGN user account bound to the API Key — `--wallet` is optional. Normal auth (API Key only, no private key needed).
+Query follow-wallet trade records. Returns trades from wallets you personally follow on the GMGN platform. The follow list is resolved automatically from the GMGN user account bound to the API Key — `--wallet` is optional. Signed auth (API Key + private key signature).
 
 ```bash
 gmgn-cli track follow-wallet \
@@ -411,7 +411,7 @@ gmgn-cli track smartmoney [--chain <chain>] [--limit <n>] [--side <side>] [--raw
 
 ## order quote
 
-Get a swap quote without submitting a transaction. All supported quote chains use critical auth and require `GMGN_PRIVATE_KEY`.
+Get a swap quote without submitting a transaction. All supported quote chains use signed auth and require `GMGN_PRIVATE_KEY`.
 
 ```bash
 npx gmgn-cli order quote \
@@ -801,7 +801,7 @@ Important notes:
 | `AUTH_SIGNATURE_INVALID` | 401 | Signature verification failed |
 | `AUTH_TIMESTAMP_EXPIRED` | 401 | Timestamp is outside the valid window (±5s) |
 | `AUTH_CLIENT_ID_REPLAYED` | 401 | client_id replayed within 7s |
-| `AUTH_REPLAY_CHECK_UNAVAILABLE` | 503 | Anti-replay Redis unavailable (critical auth only) |
+| `AUTH_REPLAY_CHECK_UNAVAILABLE` | 503 | Anti-replay Redis unavailable (signed auth only) |
 | `RATE_LIMIT_EXCEEDED` | 429 | Rate limit exceeded |
 | `RATE_LIMIT_BANNED` | 429 | Temporarily banned due to repeated rate limit violations |
 | `ERROR_RATE_LIMIT_BLOCKED` | 429 | Temporarily blocked after repeated business errors on `swap` |

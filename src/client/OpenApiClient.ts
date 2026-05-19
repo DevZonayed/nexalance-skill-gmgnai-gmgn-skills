@@ -2,8 +2,8 @@
  * OpenApiClient — GMGN OpenAPI external client
  *
  * Auth modes:
- *   Normal (market/token/portfolio): X-APIKEY + timestamp + client_id
- *   Critical (swap and order routes): normal auth + X-Signature (private key signature)
+ *   Exist (market/token/portfolio): X-APIKEY + timestamp + client_id
+ *   Signed (swap and order routes): X-APIKEY + timestamp + client_id + X-Signature (private key signature)
  */
 
 import { buildAuthQuery, buildMessage, detectAlgorithm, sign } from "./signer.js";
@@ -204,29 +204,29 @@ export class OpenApiClient {
     this.host = config.host.replace(/\/$/, "");
   }
 
-  // ---- Token endpoints (normal auth) ----
+  // ---- Token endpoints (exist auth) ----
 
   async getTokenInfo(chain: string, address: string): Promise<unknown> {
-    return this.normalRequest("GET", "/v1/token/info", { chain, address });
+    return this.authExistRequest("GET", "/v1/token/info", { chain, address });
   }
 
   async getTokenSecurity(chain: string, address: string): Promise<unknown> {
-    return this.normalRequest("GET", "/v1/token/security", { chain, address });
+    return this.authExistRequest("GET", "/v1/token/security", { chain, address });
   }
 
   async getTokenPoolInfo(chain: string, address: string): Promise<unknown> {
-    return this.normalRequest("GET", "/v1/token/pool_info", { chain, address });
+    return this.authExistRequest("GET", "/v1/token/pool_info", { chain, address });
   }
 
   async getTokenTopHolders(chain: string, address: string, extra: Record<string, string | number> = {}): Promise<unknown> {
-    return this.normalRequest("GET", "/v1/market/token_top_holders", { chain, address, ...extra });
+    return this.authExistRequest("GET", "/v1/market/token_top_holders", { chain, address, ...extra });
   }
 
   async getTokenTopTraders(chain: string, address: string, extra: Record<string, string | number> = {}): Promise<unknown> {
-    return this.normalRequest("GET", "/v1/market/token_top_traders", { chain, address, ...extra });
+    return this.authExistRequest("GET", "/v1/market/token_top_traders", { chain, address, ...extra });
   }
 
-  // ---- Market endpoints (normal auth) ----
+  // ---- Market endpoints (exist auth) ----
 
   async getTokenKline(
     chain: string,
@@ -238,17 +238,17 @@ export class OpenApiClient {
     const query: Record<string, string | number> = { chain, address, resolution };
     if (from != null) query["from"] = from;
     if (to != null) query["to"] = to;
-    return this.normalRequest("GET", "/v1/market/token_kline", query);
+    return this.authExistRequest("GET", "/v1/market/token_kline", query);
   }
 
-  // ---- Portfolio endpoints (normal auth) ----
+  // ---- Portfolio endpoints (exist auth) ----
 
   async getWalletHoldings(
     chain: string,
     walletAddress: string,
     extra: Record<string, string | number> = {}
   ): Promise<unknown> {
-    return this.normalRequest("GET", "/v1/user/wallet_holdings", {
+    return this.authExistRequest("GET", "/v1/user/wallet_holdings", {
       chain,
       wallet_address: walletAddress,
       ...extra,
@@ -260,7 +260,7 @@ export class OpenApiClient {
     walletAddress: string,
     extra: Record<string, string | number | string[]> = {}
   ): Promise<unknown> {
-    return this.normalRequest("GET", "/v1/user/wallet_activity", {
+    return this.authExistRequest("GET", "/v1/user/wallet_activity", {
       chain,
       wallet_address: walletAddress,
       ...extra,
@@ -268,7 +268,7 @@ export class OpenApiClient {
   }
 
   async getWalletStats(chain: string, walletAddresses: string[], period = "7d"): Promise<unknown> {
-    return this.normalRequest("GET", "/v1/user/wallet_stats", {
+    return this.authExistRequest("GET", "/v1/user/wallet_stats", {
       chain,
       wallet_address: walletAddresses,
       period,
@@ -280,54 +280,54 @@ export class OpenApiClient {
     walletAddress: string,
     tokenAddress: string
   ): Promise<unknown> {
-    return this.normalRequest("GET", "/v1/user/wallet_token_balance", { chain, wallet_address: walletAddress, token_address: tokenAddress });
+    return this.authExistRequest("GET", "/v1/user/wallet_token_balance", { chain, wallet_address: walletAddress, token_address: tokenAddress });
   }
 
   async getTrenches(chain: string, types?: string[], platforms?: string[], limit?: number, filters?: Record<string, number | string>): Promise<unknown> {
     const body = buildTrenchesBody(chain, types, platforms, limit, filters);
-    return this.normalRequest("POST", "/v1/trenches", { chain }, body);
+    return this.authExistRequest("POST", "/v1/trenches", { chain }, body);
   }
 
-  // ---- Market trending endpoints (normal auth) ----
+  // ---- Market trending endpoints (exist auth) ----
 
   async getTrendingSwaps(
     chain: string,
     interval: string,
     extra: Record<string, string | number | string[]> = {}
   ): Promise<unknown> {
-    return this.normalRequest("GET", "/v1/market/rank", { chain, interval, ...extra });
+    return this.authExistRequest("GET", "/v1/market/rank", { chain, interval, ...extra });
   }
 
   async getTokenSignalV2(chain: string, groups: TokenSignalGroup[]): Promise<unknown> {
-    return this.normalRequest("POST", "/v1/market/token_signal", {}, { chain, groups });
+    return this.authExistRequest("POST", "/v1/market/token_signal", {}, { chain, groups });
   }
 
-  // ---- User endpoints (normal auth) ----
+  // ---- User endpoints (exist auth) ----
 
   async getUserInfo(): Promise<unknown> {
-    return this.normalRequest("GET", "/v1/user/info", {});
+    return this.authExistRequest("GET", "/v1/user/info", {});
   }
 
   async getFollowWallet(chain: string, extra: Record<string, string | number | string[]> = {}): Promise<unknown> {
-    return this.criticalRequest("GET", "/v1/trade/follow_wallet", { chain, ...extra }, null);
+    return this.authSignedRequest("GET", "/v1/trade/follow_wallet", { chain, ...extra }, null);
   }
 
   async getKol(chain?: string, limit?: number): Promise<unknown> {
     const query: Record<string, string | number> = {};
     if (chain) query["chain"] = chain;
     if (limit != null) query["limit"] = limit;
-    return this.normalRequest("GET", "/v1/user/kol", query);
+    return this.authExistRequest("GET", "/v1/user/kol", query);
   }
 
   async getSmartMoney(chain?: string, limit?: number): Promise<unknown> {
     const query: Record<string, string | number> = {};
     if (chain) query["chain"] = chain;
     if (limit != null) query["limit"] = limit;
-    return this.normalRequest("GET", "/v1/user/smartmoney", query);
+    return this.authExistRequest("GET", "/v1/user/smartmoney", query);
   }
 
   async getCreatedTokens(chain: string, walletAddress: string, extra: Record<string, string | number> = {}): Promise<unknown> {
-    return this.normalRequest("GET", "/v1/user/created_tokens", { chain, wallet_address: walletAddress, ...extra });
+    return this.authExistRequest("GET", "/v1/user/created_tokens", { chain, wallet_address: walletAddress, ...extra });
   }
 
   async quoteOrder(
@@ -339,54 +339,54 @@ export class OpenApiClient {
     slippage: number
   ): Promise<unknown> {
     const query = { chain, from_address, input_token, output_token, input_amount, slippage };
-    return this.criticalRequest("GET", "/v1/trade/quote", query, null);
+    return this.authSignedRequest("GET", "/v1/trade/quote", query, null);
   }
 
-  // ---- Swap endpoints (critical auth) ----
+  // ---- Swap endpoints (signed auth) ----
 
   async swap(params: SwapParams): Promise<unknown> {
-    return this.criticalRequest("POST", "/v1/trade/swap", {}, params);
+    return this.authSignedRequest("POST", "/v1/trade/swap", {}, params);
   }
 
   async multiSwap(params: MultiSwapParams): Promise<unknown> {
-    return this.criticalRequest("POST", "/v1/trade/multi_swap", {}, params);
+    return this.authSignedRequest("POST", "/v1/trade/multi_swap", {}, params);
   }
 
   async queryOrder(orderId: string, chain: string): Promise<unknown> {
-    return this.criticalRequest("GET", "/v1/trade/query_order", { order_id: orderId, chain }, null);
+    return this.authSignedRequest("GET", "/v1/trade/query_order", { order_id: orderId, chain }, null);
   }
 
   async getGasPrice(chain: string): Promise<unknown> {
-    return this.normalRequest("GET", "/v1/trade/gas_price", { chain });
+    return this.authExistRequest("GET", "/v1/trade/gas_price", { chain });
   }
 
-  // ---- Strategy order endpoints (critical auth) ----
+  // ---- Strategy order endpoints (signed auth) ----
 
   async createStrategyOrder(params: StrategyCreateParams): Promise<unknown> {
-    return this.criticalRequest("POST", "/v1/trade/strategy/create", {}, params);
+    return this.authSignedRequest("POST", "/v1/trade/strategy/create", {}, params);
   }
 
   async getStrategyOrders(chain: string, extra: Record<string, string | number> = {}): Promise<unknown> {
-    return this.criticalRequest("GET", "/v1/trade/strategy/orders", { chain, ...extra }, null);
+    return this.authSignedRequest("GET", "/v1/trade/strategy/orders", { chain, ...extra }, null);
   }
 
   async cancelStrategyOrder(params: StrategyCancelParams): Promise<unknown> {
-    return this.criticalRequest("POST", "/v1/trade/strategy/cancel", {}, params);
+    return this.authSignedRequest("POST", "/v1/trade/strategy/cancel", {}, params);
   }
 
   // ---- Cooking endpoints ----
 
   async getCookingStatistics(): Promise<unknown> {
-    return this.normalRequest("GET", "/v1/cooking/statistics", {});
+    return this.authExistRequest("GET", "/v1/cooking/statistics", {});
   }
 
   async createToken(params: CreateTokenParams): Promise<unknown> {
-    return this.criticalRequest("POST", "/v1/cooking/create_token", {}, params);
+    return this.authSignedRequest("POST", "/v1/cooking/create_token", {}, params);
   }
 
   // ---- Internal methods ----
 
-  private async normalRequest(
+  private async authExistRequest(
     method: string,
     subPath: string,
     queryExtra: Record<string, string | number | string[]>,
@@ -412,7 +412,7 @@ export class OpenApiClient {
     }, true);
   }
 
-  private async criticalRequest(
+  private async authSignedRequest(
     method: string,
     subPath: string,
     queryExtra: Record<string, string | number | string[]>,

@@ -30,7 +30,7 @@ export function buildAuthQuery(): { timestamp: number; client_id: string } {
 }
 
 /**
- * Build the signature message (critical auth)
+ * Build the signature message (signed auth)
  * Format: {sub_path}:{sorted_query_string}:{request_body}:{timestamp}
  * sorted_query_string: all query params (including timestamp, client_id) sorted alphabetically by key.
  * Array values are serialized as repeated k=v pairs (same as buildUrl / URLSearchParams), sorted by value.

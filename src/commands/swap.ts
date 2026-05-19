@@ -149,7 +149,7 @@ export function registerSwapCommands(program: Command): void {
 
   order
     .command("quote")
-    .description("Get a swap quote without submitting a transaction (requires critical auth)")
+    .description("Get a swap quote without submitting a transaction (signed auth — requires GMGN_PRIVATE_KEY)")
     .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth (requires GMGN_PRIVATE_KEY)")
     .requiredOption("--from <address>", "Wallet address (must match API Key binding)")
     .requiredOption("--input-token <address>", "Input token contract address")
@@ -185,7 +185,7 @@ export function registerSwapCommands(program: Command): void {
 
   program
     .command("gas-price")
-    .description("Query recommended gas price tiers for any chain (normal auth; eth / bsc / base / sol)")
+    .description("Query recommended gas price tiers for any chain (exist auth — API Key only; eth / bsc / base / sol)")
     .requiredOption("--chain <chain>", "Chain: eth / bsc / base / sol")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
