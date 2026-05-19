@@ -569,6 +569,12 @@ gmgn-cli order quote \
 # Query order
 gmgn-cli order get --chain sol --order-id <order-id>
 
+# Query real-time gas price (all chains)
+gmgn-cli gas-price --chain sol
+gmgn-cli gas-price --chain eth
+gmgn-cli gas-price --chain bsc
+gmgn-cli gas-price --chain base
+
 # Multi-wallet concurrent swap
 gmgn-cli multi-swap \
   --chain sol \
@@ -580,6 +586,34 @@ gmgn-cli multi-swap \
 ```
 
 > `order quote` uses critical auth on `sol` / `bsc` / `base` / `eth` and requires `GMGN_PRIVATE_KEY`.
+
+### ETH Gas Control (ETH only)
+
+```bash
+# Pick a gas tier instead of entering gwei manually (low / average / high)
+gmgn-cli swap \
+  --chain eth \
+  --from <wallet-address> \
+  --input-token <input-token-addr> \
+  --output-token <output-token-addr> \
+  --amount <amount> \
+  --slippage 0.01 \
+  --gas-level high
+
+# Let GMGN auto-select the optimal gas fee for condition orders
+gmgn-cli swap \
+  --chain eth \
+  --from <wallet-address> \
+  --input-token <input-token-addr> \
+  --output-token <output-token-addr> \
+  --amount <amount> \
+  --slippage 0.01 \
+  --condition-orders '[...]' \
+  --auto-fee
+```
+
+> `--gas-level` and `--auto-fee` are ETH only. `--auto-fee` only takes effect when used with `--condition-orders`.
+> For other chains (SOL / BSC / BASE), use `gas-price` to query the current gas, then pass the result via `--gas-price`.
 
 ### Swap with Take-Profit / Stop-Loss Orders (requires private key)
 
@@ -674,6 +708,7 @@ gmgn-cli cooking \
 |----------|--------|-----------------|
 | token / market / portfolio / track | `sol` / `bsc` / `base` / `eth` | — |
 | swap / order | `sol` / `bsc` / `base` / `eth` | sol: SOL, USDC · bsc: BNB, USDC · base: ETH, USDC · eth: ETH |
+| gas-price | `sol` / `bsc` / `base` / `eth` | — |
 
 ---
 

@@ -593,6 +593,12 @@ gmgn-cli order quote \
 # 查询订单状态
 gmgn-cli order get --chain sol --order-id <order-id>
 
+# 查询实时 Gas 价格（支持全链）
+gmgn-cli gas-price --chain sol
+gmgn-cli gas-price --chain eth
+gmgn-cli gas-price --chain bsc
+gmgn-cli gas-price --chain base
+
 # 多钱包并发 Swap
 gmgn-cli multi-swap \
   --chain sol \
@@ -604,6 +610,34 @@ gmgn-cli multi-swap \
 ```
 
 > `order quote` 在 `sol` / `bsc` / `base` / `eth` 上都走关键鉴权，必须配置 `GMGN_PRIVATE_KEY`。
+
+### ETH Gas 档位控制（仅限 ETH）
+
+```bash
+# 按档位设置 Gas（low / average / high），替代手动填写 gwei
+gmgn-cli swap \
+  --chain eth \
+  --from <wallet-address> \
+  --input-token <input-token-addr> \
+  --output-token <output-token-addr> \
+  --amount <amount> \
+  --slippage 0.01 \
+  --gas-level high
+
+# 策略单（condition-orders）由 GMGN 自动选择最优 Gas Fee
+gmgn-cli swap \
+  --chain eth \
+  --from <wallet-address> \
+  --input-token <input-token-addr> \
+  --output-token <output-token-addr> \
+  --amount <amount> \
+  --slippage 0.01 \
+  --condition-orders '[...]' \
+  --auto-fee
+```
+
+> `--gas-level` 和 `--auto-fee` 仅支持 ETH 链。`--auto-fee` 仅在携带 `--condition-orders` 时生效。
+> 其他链（SOL / BSC / BASE）请先用 `gas-price` 查询当前 Gas，再通过 `--gas-price` 手动传入。
 
 ### 带止盈止损的 Swap（需要私钥）
 
@@ -698,6 +732,7 @@ gmgn-cli cooking \
 |----------|----------|-----------|
 | token / market / portfolio / track | `sol` / `bsc` / `base` / `eth` | — |
 | swap / order | `sol` / `bsc` / `base` / `eth` | sol: SOL、USDC · bsc: BNB、USDC · base: ETH、USDC · eth: ETH |
+| gas-price | `sol` / `bsc` / `base` / `eth` | — |
 
 ---
 
