@@ -1,7 +1,7 @@
 ---
 name: gmgn-swap
 description: "[FINANCIAL EXECUTION] Buy and sell meme coins and crypto tokens on Solana, BSC, Base, or Ethereum — single swap, multi-wallet batch trading, limit orders, stop loss, take profit, trailing stop loss, trailing take profit via GMGN API. Requires explicit user confirmation. Use when user asks to buy, sell, or swap a token, trade from multiple wallets, set a limit order, stop loss, take profit, or check order status."
-argument-hint: "[--chain <chain> --from <wallet> --input-token <addr> --output-token <addr> --amount <n>] | [order get --chain <chain> --order-id <id>] | [order gas-price --chain <eth|bsc|base>] | [order strategy list --chain <chain> --group-tag <LimitOrder|STMix>] | [order strategy create --chain <chain> --order-type limit_order --sub-order-type <buy_low|buy_high|stop_loss|take_profit> ...]"
+argument-hint: "[--chain <chain> --from <wallet> --input-token <addr> --output-token <addr> --amount <n>] | [order get --chain <chain> --order-id <id>] | [gas-price --chain <eth|bsc|base|sol>] | [order strategy list --chain <chain> --group-tag <LimitOrder|STMix>] | [order strategy create --chain <chain> --order-type limit_order --sub-order-type <buy_low|buy_high|stop_loss|take_profit> ...]"
 metadata:
   cliHelp: "gmgn-cli swap --help"
 ---
@@ -49,7 +49,7 @@ Use the `gmgn-cli` tool to submit a token swap or query an existing order. `GMGN
 | `multi-swap` | Submit token swaps across multiple wallets concurrently (up to 100) |
 | `order quote` | Get a swap quote (no transaction submitted; requires critical auth) |
 | `order get` | Query order status |
-| `order gas-price` | Query recommended EVM gas price (low / average / high tiers); normal auth |
+| `gas-price` | Query recommended gas price (low / average / high tiers) for any chain; normal auth |
 | `order strategy create` | Create a limit/strategy order (requires private key) |
 | `order strategy list` | List strategy orders (requires private key) |
 | `order strategy cancel` | Cancel a strategy order (requires private key) |
@@ -88,7 +88,7 @@ All swap-related routes used by this skill go through GMGN's leaky-bucket limite
 | `multi-swap` | `POST /v1/trade/multi_swap` | 5 |
 | `order quote` | `GET /v1/trade/quote` | 2 |
 | `order get` | `GET /v1/trade/query_order` | 1 |
-| `order gas-price` | `GET /v1/trade/gas_price` | 1 |
+| `gas-price` | `GET /v1/trade/gas_price` | 1 |
 
 When a request returns `429`:
 
@@ -465,25 +465,44 @@ Response fields are shared with `swap` — see [`swap` / `order get` Response Fi
 
 ---
 
-## `order gas-price` Usage
+## `gas-price` Usage
 
-Query recommended EVM gas price tiers. Uses normal auth (API Key only — no private key required).
+Query recommended gas price tiers for any chain. Uses normal auth (API Key only — no private key required).
 
 ```bash
-gmgn-cli order gas-price --chain eth
-gmgn-cli order gas-price --chain bsc
-gmgn-cli order gas-price --chain base
+gmgn-cli gas-price --chain eth
+gmgn-cli gas-price --chain bsc
+gmgn-cli gas-price --chain base
+gmgn-cli gas-price --chain sol
 ```
 
-### `order gas-price` Response Fields
+### `gas-price` Response Fields
 
-| Field              | Type   | Description |
-| ------------------ | ------ | ---- |
-| `chain`            | string | Chain identifier |
-| `suggest_base_fee` | string | Suggested base fee (gwei) |
-| `low`              | string | Low-priority gas price (gwei) |
-| `average`          | string | Average-priority gas price (gwei) |
-| `high`             | string | High-priority gas price (gwei) |
+All fields are omitempty — fields unsupported by a chain are omitted. Units are chain-native (wei for EVM chains; lamports / chain-native for SOL).
+
+| Field                    | Type    | Description |
+| ------------------------ | ------- | ----------- |
+| `chain`                  | string  | Chain identifier |
+| `auto`                   | string  | Automatic gas price |
+| `auto_mev`               | string  | Anti-MEV automatic gas price |
+| `last_block`             | int64   | Latest block number |
+| `high`                   | string  | High-priority gas price |
+| `average`                | string  | Average-priority gas price |
+| `low`                    | string  | Low-priority gas price |
+| `suggest_base_fee`       | string  | Suggested base fee |
+| `high_prio_fee`          | string  | High-priority fee |
+| `average_prio_fee`       | string  | Average-priority fee |
+| `low_prio_fee`           | string  | Low-priority fee |
+| `high_prio_fee_mixed`    | string  | High mixed priority fee |
+| `average_prio_fee_mixed` | string  | Average mixed priority fee |
+| `low_prio_fee_mixed`     | string  | Low mixed priority fee |
+| `native_token_usd_price` | float32 | Native token USD price |
+| `high_estimate_time`     | int64   | Estimated confirmation time for high tier (seconds) |
+| `average_estimate_time`  | int64   | Estimated confirmation time for average tier (seconds) |
+| `low_estimate_time`      | int64   | Estimated confirmation time for low tier (seconds) |
+| `high_orign`             | string  | High-priority raw origin value |
+| `average_orign`          | string  | Average-priority raw origin value |
+| `low_orign`              | string  | Low-priority raw origin value |
 
 ---
 
@@ -618,7 +637,7 @@ gmgn-cli order strategy cancel \
 - `--amount` is in the **smallest unit** (e.g., lamports for SOL)
 - `order strategy create`, `order strategy list`, and `order strategy cancel` use critical auth (require `GMGN_PRIVATE_KEY`)
 - Use `--raw` to get single-line JSON for further processing
-- **Chain restrictions for fee flags** — see the `Chain` column in each parameter table above. `--priority-fee` and `--tip-fee` are SOL/BSC only; `--gas-price`, `--max-fee-per-gas`, `--max-priority-fee-per-gas` are BSC/BASE/ETH only; `--gas-level` and `--auto-fee` are ETH only. The server returns 400 if a chain-restricted flag is sent on the wrong chain.
+- **Chain restrictions for fee flags** — see the `Chain` column in each parameter table above. `--priority-fee` and `--tip-fee` are SOL/BSC only; `--gas-price`, `--max-fee-per-gas`, `--max-priority-fee-per-gas` are BSC/BASE/ETH only; `--gas-level` and `--auto-fee` are ETH only. The server returns 400 if a chain-restricted flag is sent on the wrong chain. (`gas-price` itself supports all four chains including `sol`.)
 - **EIP-1559 minimum values per chain:**
   - BSC: `max_fee_per_gas` and `max_priority_fee_per_gas` min 50 000 000 wei (≈ 0.05 gwei); passing `"0"` returns 400
   - BASE / ETH: `max_fee_per_gas` and `max_priority_fee_per_gas` min 200 000 wei
