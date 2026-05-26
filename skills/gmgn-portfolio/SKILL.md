@@ -54,10 +54,17 @@ Use the `gmgn-cli` tool to query wallet portfolio data based on the user's reque
 
 All portfolio routes used by this skill go through GMGN's leaky-bucket limiter with `rate=20` and `capacity=20`. Sustained throughput is roughly `20 ÷ weight` requests/second, and the max burst is roughly `floor(20 ÷ weight)` when the bucket is full.
 
+**Critical auth** (`GMGN_API_KEY` + `GMGN_PRIVATE_KEY` required):
+
+| Command | Route | Weight |
+|---------|-------|--------|
+| `portfolio holdings` | `GET /v1/user/wallet_holdings` | 5 |
+
+**Exist auth** (`GMGN_API_KEY` only):
+
 | Command | Route | Weight |
 |---------|-------|--------|
 | `portfolio info` | `GET /v1/user/info` | 1 |
-| `portfolio holdings` | `GET /v1/user/wallet_holdings` | 2 |
 | `portfolio activity` | `GET /v1/user/wallet_activity` | 3 |
 | `portfolio stats` | `GET /v1/user/wallet_stats` | 3 |
 | `portfolio token-balance` | `GET /v1/user/wallet_token_balance` | 1 |
@@ -360,7 +367,7 @@ Show the `[Identity: ...]` line only if `common` is present in the response. For
 
 ## Notes
 
-- All portfolio commands use exist auth (API Key only, no signature required)
+- `portfolio holdings` uses **critical auth** (`GMGN_API_KEY` + `GMGN_PRIVATE_KEY` required — CLI signs the request automatically). All other portfolio commands use exist auth (API Key only, no signature required).
 - `portfolio stats` supports multiple `--wallet` flags for batch queries
 - Use `--raw` to get single-line JSON for further processing
 - **Input validation** — Wallet and token addresses are validated against the expected chain format at runtime (sol: base58 32–44 chars; bsc/base/eth: `0x` + 40 hex digits). The CLI exits with an error on invalid input.

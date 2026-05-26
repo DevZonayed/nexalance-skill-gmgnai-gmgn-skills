@@ -241,18 +241,18 @@ export class OpenApiClient {
     return this.authExistRequest("GET", "/v1/market/token_kline", query);
   }
 
-  // ---- Portfolio endpoints (exist auth) ----
+  // ---- Portfolio endpoints ----
 
   async getWalletHoldings(
     chain: string,
     walletAddress: string,
     extra: Record<string, string | number> = {}
   ): Promise<unknown> {
-    return this.authExistRequest("GET", "/v1/user/wallet_holdings", {
+    return this.authSignedRequest("GET", "/v1/user/wallet_holdings", {
       chain,
       wallet_address: walletAddress,
       ...extra,
-    });
+    }, null);
   }
 
   async getWalletActivity(
@@ -419,7 +419,7 @@ export class OpenApiClient {
     body: unknown
   ): Promise<unknown> {
     if (!this.privateKeyPem) {
-      throw new Error("GMGN_PRIVATE_KEY is required for critical-auth commands (swap, order, and follow-wallet commands)");
+      throw new Error("GMGN_PRIVATE_KEY is required for critical-auth commands (swap, order, follow-wallet, and portfolio holdings commands)");
     }
 
     return this.executePreparedRequest(() => {
