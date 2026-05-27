@@ -41,7 +41,7 @@ export function registerSwapCommands(program: Command): void {
       if (opts.percent != null) validatePercent(opts.percent);
       const params: SwapParams = {
         chain: opts.chain,
-        from_address: opts.from.toLowerCase(),
+        from_address: opts.chain === "sol" ? opts.from : opts.from.toLowerCase(),
         input_token: opts.inputToken,
         output_token: opts.outputToken,
         input_amount: opts.percent != null ? (opts.amount ?? "0") : opts.amount,
@@ -109,7 +109,7 @@ export function registerSwapCommands(program: Command): void {
       }
       const params: MultiSwapParams = {
         chain: opts.chain,
-        accounts: accounts.map((a: string) => a.toLowerCase()),
+        accounts: opts.chain === "sol" ? accounts : accounts.map((a: string) => a.toLowerCase()),
         input_token: opts.inputToken,
         output_token: opts.outputToken,
       };
