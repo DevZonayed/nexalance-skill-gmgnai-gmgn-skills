@@ -600,11 +600,117 @@ gmgn-cli order strategy list --chain sol --group-tag STMix --base-token <token_a
 
 ### `order strategy list` Response Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
+| Field             | Type   | Description |
+| ----------------- | ------ | ---- |
 | `next_page_token` | string | Cursor for next page; empty when no more data |
-| `total` | int | Total count (only returned when `--type open`) |
-| `list` | array | Strategy order list |
+| `total`           | int    | Total count (only returned when `--type open`) |
+| `list`            | array  | Array of strategy order objects; see fields below |
+
+#### `list[]` — Strategy Order Object
+
+| Field                      | Type   | Description |
+| -------------------------- | ------ | ---- |
+| `anti_mev_mode`            | string | Anti-MEV mode string; empty when not set |
+| `auto_slippage`            | bool   | Whether auto slippage is enabled |
+| `base_decimal`             | int    | Base token decimal places |
+| `base_token`               | string | Base token contract address |
+| `chain`                    | string | Chain: `sol` / `bsc` / `base` / `eth` |
+| `close_amount`             | string | Token amount sold on close; empty when order is open |
+| `close_price`              | string | Token price at close; empty when order is open |
+| `close_sell_model`         | string | Sell model used on close; empty when order is open |
+| `close_sign_hash`          | string | Close transaction hash; empty when order is open |
+| `close_time`               | int    | Close timestamp (ms); `0` when order is open |
+| `condition_orders`         | array  | Condition sub-orders; each element is an object — see `condition_orders[]` below |
+| `create_time`              | int    | Creation timestamp (ms) |
+| `custom_rpc`               | string | Custom RPC endpoint; empty string when not set |
+| `dev_sell_ratio`           | string | Dev sell trigger ratio; empty when not set |
+| `drawdown_rate`            | string | Trailing drawdown rate for `profit_stop_trace` / `loss_stop_trace`; empty when not set |
+| `expire_time`              | int    | Expiration timestamp (ms) |
+| `fee`                      | string | Base transaction fee |
+| `gas_price`                | string | Gas price |
+| `is_anti_mev`              | bool   | Whether anti-MEV protection is active |
+| `limit_price_mode`         | string | Limit price mode; empty when not set |
+| `loss_stop`                | string | Stop-loss trigger price; empty when not set |
+| `loss_stop_type`           | string | Stop-loss type; empty when not set |
+| `max_fee_per_gas`          | string | EIP-1559 max fee per gas; EVM only; empty on SOL |
+| `max_priority_fee_per_gas` | string | EIP-1559 max priority fee per gas; EVM only; empty on SOL |
+| `open_amount`              | string | Token amount at open (smallest unit) |
+| `open_price`               | string | Token price at open |
+| `open_sign_hash`           | string | Open transaction hash; empty before confirmed |
+| `order_id`                 | string | Unique order ID (UUID) |
+| `order_statistic`          | object | Cumulative order statistics; see `order_statistic` Object below |
+| `order_type`               | string | Order type: `smart_trade` / `limit_order` |
+| `place_action`             | string | Placement action; empty when not applicable |
+| `prepare_status`           | string | Preparation status; empty when not applicable |
+| `priority_fee`             | string | Priority fee; SOL / BSC only |
+| `profit_stop`              | string | Take-profit trigger price; empty when not set |
+| `profit_stop_type`         | string | Take-profit type; empty when not set |
+| `quote_decimal`            | int    | Quote token decimal places |
+| `quote_investment`         | string | Quote token investment amount (smallest unit) |
+| `quote_token`              | string | Quote token contract address |
+| `reason_by`                | string | Entity that triggered the close; empty when open |
+| `reason_code`              | string | Reason code for the close action; empty when open |
+| `record_high_price`        | string | Highest recorded price since open; used for trailing stops |
+| `sell_param`               | object | Sell transaction parameters; see `sell_param` Object below |
+| `sell_ratio`               | string | Sell ratio; empty when not set |
+| `sell_ratio_type`          | string | Sell ratio base: `buy_amount` / others |
+| `slippage`                 | int    | Slippage tolerance (0 = auto) |
+| `status`                   | string | Order lifecycle status: `open` / `closed` |
+| `strategy_status`          | string | Strategy running status: `running` / `stopped` |
+| `sub_order_type`           | string | Sub-order type: `mix_trade` / others |
+| `tip_fee`                  | string | Tip fee; SOL only |
+| `token_balance`            | string | Remaining token balance; empty when not available |
+| `token_logo`               | string | Token logo URL |
+| `token_name`               | string | Token display name |
+| `token_price`              | string | Current token price; empty when not available |
+| `total_supply`             | string | Token total supply |
+| `version`                  | int    | Order schema version |
+| `wallet_address`           | string | Wallet address that placed the order |
+
+#### `condition_orders[]` — Condition Sub-Order Object
+
+| Field         | Type   | Description |
+| ------------- | ------ | ---- |
+| `cid`         | string | Condition sub-order ID (UUID) |
+| `order_type`  | string | Sub-order type: `profit_stop` / `loss_stop` / `profit_stop_trace` / `loss_stop_trace` |
+| `side`        | string | Trade side: `sell` |
+| `price_scale` | string | Price ratio relative to open price (string); `profit_stop` / `loss_stop` required |
+| `sell_ratio`  | string | Sell ratio (string), e.g. `"100"` |
+| `check_price` | string | Computed trigger price derived from `price_scale` and open price |
+| `status`      | string | Sub-order status: `cancel` / `success` / `failed` |
+
+#### `order_statistic` Object
+
+| Field                  | Type   | Description |
+| ---------------------- | ------ | ---- |
+| `buy_amount`           | string | Bought token amount (smallest unit) |
+| `buy_quote_price`      | string | Quote token price at buy |
+| `buy_usdt_price`       | string | USDT-denominated price at buy |
+| `quote_profit`         | string | Realized profit in quote token |
+| `sell_amount`          | string | Total token amount sold |
+| `sell_num`             | int    | Total number of sell attempts |
+| `success_sell_amount`  | string | Successfully sold token amount |
+| `success_sell_num`     | int    | Number of successful sells |
+| `usdt_profit`          | string | Realized profit in USDT |
+
+#### `sell_param` Object
+
+| Field                      | Type   | Description |
+| -------------------------- | ------ | ---- |
+| `anti_mev_mode`            | string | Anti-MEV mode for the sell transaction |
+| `auto_fee`                 | bool   | Whether auto fee is enabled for the sell |
+| `auto_slippage`            | bool   | Whether auto slippage is enabled for the sell |
+| `auto_tip`                 | bool   | Whether auto tip is enabled |
+| `custom_rpc`               | string | Custom RPC endpoint; empty string when not set |
+| `fee`                      | string | Sell transaction fee |
+| `gas_price`                | string | Gas price for the sell |
+| `is_anti_mev`              | bool   | Whether anti-MEV protection is active for the sell |
+| `max_fee_per_gas`          | string | EIP-1559 max fee per gas for the sell; EVM only |
+| `max_priority_fee_per_gas` | string | EIP-1559 max priority fee per gas for the sell; EVM only |
+| `max_tip_fee`              | string | Maximum tip fee; empty when not set |
+| `priority_fee`             | string | Priority fee for the sell; SOL / BSC only |
+| `slippage`                 | int    | Slippage tolerance for the sell (0 = auto) |
+| `tip_fee`                  | string | Tip fee for the sell; SOL only |
 
 ---
 
