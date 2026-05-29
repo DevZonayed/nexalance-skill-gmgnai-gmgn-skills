@@ -44,11 +44,12 @@ export function buildMessage(
   const sortedQs = Object.keys(queryParams)
     .sort()
     .flatMap((k) => {
+      const ek = encodeURIComponent(k);
       const v = queryParams[k];
       if (Array.isArray(v)) {
-        return [...v].sort().map((item) => `${k}=${item}`);
+        return [...v].sort().map((item) => `${ek}=${encodeURIComponent(item)}`);
       }
-      return [`${k}=${v}`];
+      return [`${ek}=${encodeURIComponent(String(v))}`];
     })
     .join("&");
   return `${subPath}:${sortedQs}:${body}:${timestamp}`;
