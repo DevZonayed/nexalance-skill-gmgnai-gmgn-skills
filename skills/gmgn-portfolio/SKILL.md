@@ -233,7 +233,7 @@ The response has a `activities` array and a `next` cursor field for pagination.
 | `token.symbol` | Token ticker |
 | `token_amount` | Token quantity in this transaction |
 | `cost_usd` | USD value of this transaction |
-| `price` | Token price denominated in the quote token of the trading pair at time of transaction (e.g. SOL or USDC) |
+| `price` | Token price denominated in the quote token of the trading pair at time of transaction |
 | `price_usd` | Token price in USD at time of transaction |
 | `timestamp` | Unix timestamp of the transaction |
 | `next` | Pagination cursor — pass to `--cursor` to fetch the next page |
