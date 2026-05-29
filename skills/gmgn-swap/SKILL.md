@@ -88,6 +88,9 @@ All swap-related routes used by this skill go through GMGN's leaky-bucket limite
 | `multi-swap` | `POST /v1/trade/multi_swap` | 5 |
 | `order quote` | `GET /v1/trade/quote` | 2 |
 | `order get` | `GET /v1/trade/query_order` | 1 |
+| `order strategy create` | `POST /v1/trade/strategy/create` | 5 |
+| `order strategy cancel` | `POST /v1/trade/strategy/cancel` | 2 |
+| `order strategy list` | `GET /v1/trade/strategy/orders` | 1 |
 | `gas-price` | `GET /v1/trade/gas_price` | 1 |
 
 When a request returns `429`:
