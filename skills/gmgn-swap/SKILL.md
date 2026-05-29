@@ -544,7 +544,7 @@ gmgn-cli order strategy create \
 | `--quote-token` | Yes | all | Quote token contract address |
 | `--order-type` | Yes | all | Order type: `limit_order` |
 | `--sub-order-type` | Yes | all | Sub-order type: `buy_low` / `buy_high` / `stop_loss` / `take_profit` |
-| `--check-price` | Yes | all | Trigger check price |
+| `--check-price` | Yes | all | Trigger price in USD — the order fires when the token's USD price crosses this value |
 | `--amount-in` | No* | all | Input amount (smallest unit). Mutually exclusive with `--amount-in-percent` |
 | `--amount-in-percent` | No* | all | Input as percentage (e.g. `50` = 50%). Mutually exclusive with `--amount-in` |
 | `--limit-price-mode` | No | all | `exact` / `slippage` (default: `slippage`) |
