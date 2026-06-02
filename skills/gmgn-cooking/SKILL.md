@@ -26,7 +26,7 @@ Use the `gmgn-cli` tool to create a token on a launchpad platform or query token
 
 - **Status polling via `order get`** — `cooking create` is asynchronous. The immediate response may show `pending`. Poll with `gmgn-cli order get --chain <chain> --order-id <order_id>` until `confirmed`. The new token's contract address is in the `report.output_token` field of the `order get` response, not in the initial create response.
 
-- **Signed auth** — `cooking create` requires both `GMGN_API_KEY` and `GMGN_PRIVATE_KEY`. The private key never leaves the machine — the CLI uses it only for local signing. `cooking stats` uses normal auth (API Key only).
+- **Signed auth** — `cooking create` requires both `GMGN_API_KEY` and `GMGN_PRIVATE_KEY`. The private key never leaves the machine — the CLI uses it only for local signing. `cooking stats` uses exist auth (API Key only).
 
 - **Slippage** — The initial buy is executed as part of the same transaction as token creation. Slippage applies to that buy. Use `--slippage` (decimal, e.g. `0.01` = 1%) or `--auto-slippage`. One of the two is required when `--buy-amt` is set.
 
@@ -43,7 +43,7 @@ Use the `gmgn-cli` tool to create a token on a launchpad platform or query token
 
 | Sub-command | Description |
 |-------------|-------------|
-| `cooking stats` | Get token creation count statistics grouped by launchpad platform (normal auth) |
+| `cooking stats` | Get token creation count statistics grouped by launchpad platform (exist auth) |
 | `cooking create` | Deploy a new token on a launchpad platform (signed auth) |
 
 ## Supported Chains
@@ -536,7 +536,7 @@ Once all information is collected, present the pre-create confirmation summary (
 ## Notes
 
 - `cooking create` uses **signed auth** (API Key + signature) — CLI handles signing automatically.
-- `cooking stats` uses normal auth (API Key only — no private key needed).
+- `cooking stats` uses exist auth (API Key only — no private key needed).
 - The new token's mint address is in `report.output_token` from `gmgn-cli order get`, not in the initial `cooking create` response.
 - Use `--raw` on any command to get single-line JSON for further processing.
 
