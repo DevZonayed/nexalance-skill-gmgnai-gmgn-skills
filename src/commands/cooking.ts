@@ -20,23 +20,57 @@ export function registerCookingCommands(program: Command): void {
   cooking
     .command("create")
     .description("Create a token on a launchpad platform (requires private key)")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / ton")
-    .requiredOption("--dex <dex>", "Launchpad: pump / raydium / pancakeswap / flap / fourmeme / bonk / bags / ...")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
+    .requiredOption("--dex <dex>", "Launchpad: pump / bonk / bags (sol) / fourmeme / flap (bsc) / klik / clanker (base)")
     .requiredOption("--from <address>", "Wallet address (must match API Key binding)")
     .requiredOption("--name <name>", "Token name")
     .requiredOption("--symbol <symbol>", "Token symbol")
     .requiredOption("--buy-amt <amount>", "Initial buy amount in native token (e.g. 0.01 SOL)")
     .option("--image <base64>", "Token logo as base64-encoded data (max 2MB decoded)")
     .option("--image-url <url>", "Token logo URL")
+    .option("--description <text>", "Token description / project pitch")
     .option("--website <url>", "Website URL")
     .option("--twitter <url>", "Twitter link")
     .option("--telegram <url>", "Telegram link")
     .option("--slippage <n>", "Slippage tolerance (e.g. 0.01 = 1%)", parseFloat)
     .option("--auto-slippage", "Enable automatic slippage")
+    .option("--fee <amount>", "Base gas / fee")
     .option("--priority-fee <sol>", "Priority fee in SOL (SOL only)")
     .option("--tip-fee <amount>", "Tip fee")
     .option("--gas-price <amount>", "Gas price in wei (EVM chains)")
-    .option("--anti-mev", "Enable anti-MEV protection")
+    .option("--max-fee-per-gas <amount>", "Max fee per gas in wei (EVM only)")
+    .option("--max-priority-fee-per-gas <amount>", "Max priority fee per gas in wei (EVM only)")
+    .option("--anti-mev", "Enable anti-MEV protection (SOL only)")
+    .option("--anti-mev-mode <mode>", "Anti-MEV mode: normal / secure (SOL only)")
+    .option("--raised-token <symbol>", "Raise token symbol: pump→USDC; bonk→USD1; fourmeme→USDT/USD1; leave empty for native")
+    .option("--dev-wallet-bps <n>", "Dev wallet fee in basis points (100 = 1%)", parseInt)
+    .option("--dev-gas <amount>", "Dev gas amount")
+    .option("--dev-priority <amount>", "Dev priority fee")
+    .option("--dev-tip <amount>", "Dev tip fee")
+    .option("--dev-max-fee-per-gas <amount>", "Dev tx feeCap in wei (EVM EIP-1559)")
+    .option("--approve-vision <version>", "Approve vision version: v1 / v2 (default: v2)")
+    .option("--source <source>", "Traffic source identifier")
+    // Pump.fun specific
+    .option("--is-mayhem", "Enable Mayhem mode (Pump.fun only)")
+    .option("--is-cashback", "Enable Cashback (Pump.fun only)")
+    .option("--is-buy-back", "Enable Agent Auto Buyback (Pump.fun only)")
+    .option("--pump-fee-share-list <json>", "Pump.fun fee share list as JSON array (Pump.fun only)")
+    // Flap specific
+    .option("--flap-rate-conf <json>", "Flap rate config as JSON object (Flap only)")
+    // FourMeme specific
+    .option("--fourmeme-rate-conf <json>", "FourMeme rate config as JSON object (FourMeme only)")
+    // BAGS specific
+    .option("--bags-fee-share-list <json>", "BAGS fee share list as JSON array (BAGS only)")
+    // Bonk specific
+    .option("--bonk-model <model>", "Bonk model identifier (bonk DEX only)")
+    // Multi-wallet buy
+    .option("--buy-wallets <json>", "Multi-wallet buy config as JSON array [{from_address, buy_amt}]")
+    .option("--snip-buy-wallets <json>", "Snipe-buy wallet config as JSON array [{from_address, buy_amt}]")
+    .option("--interval-seconds <n>", "Interval between multi-wallet buys in seconds", parseInt)
+    // CondMarket execution config + auto-sell (JSON)
+    .option("--buy-trade-config <json>", "Buy-side trade config for CondMarket orders as JSON (TradeParam)")
+    .option("--sell-trade-config <json>", "Sell-side trade config for auto-sell / pending_sell as JSON (TradeParam)")
+    .option("--sell-configs <json>", "Auto-sell strategy list as JSON array (CookingSellConfig[])")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
       if (!opts.image && !opts.imageUrl) {
@@ -58,15 +92,42 @@ export function registerCookingCommands(program: Command): void {
       };
       if (opts.image) params.image = opts.image;
       if (opts.imageUrl) params.image_url = opts.imageUrl;
+      if (opts.description) params.description = opts.description;
       if (opts.website) params.website = opts.website;
       if (opts.twitter) params.twitter = opts.twitter;
       if (opts.telegram) params.telegram = opts.telegram;
       if (opts.slippage != null) params.slippage = opts.slippage;
       if (opts.autoSlippage) params.auto_slippage = true;
+      if (opts.fee) params.fee = opts.fee;
       if (opts.priorityFee) params.priority_fee = opts.priorityFee;
       if (opts.tipFee) params.tip_fee = opts.tipFee;
       if (opts.gasPrice) params.gas_price = opts.gasPrice;
+      if (opts.maxFeePerGas) params.max_fee_per_gas = opts.maxFeePerGas;
+      if (opts.maxPriorityFeePerGas) params.max_priority_fee_per_gas = opts.maxPriorityFeePerGas;
       if (opts.antiMev) params.is_anti_mev = true;
+      if (opts.antiMevMode) params.anti_mev_mode = opts.antiMevMode;
+      if (opts.raisedToken != null) params.raised_token = opts.raisedToken;
+      if (opts.devWalletBps != null) params.dev_wallet_bps = opts.devWalletBps;
+      if (opts.devGas) params.dev_gas = opts.devGas;
+      if (opts.devPriority) params.dev_priority = opts.devPriority;
+      if (opts.devTip) params.dev_tip = opts.devTip;
+      if (opts.devMaxFeePerGas) params.dev_max_fee_per_gas = opts.devMaxFeePerGas;
+      if (opts.approveVision) params.approve_vision = opts.approveVision;
+      if (opts.source) params.source = opts.source;
+      if (opts.isMayhem) params.is_mayhem = true;
+      if (opts.isCashback) params.is_cashback = true;
+      if (opts.isBuyBack) params.is_buy_back = true;
+      if (opts.pumpFeeShareList) params.pump_fee_share_list = JSON.parse(opts.pumpFeeShareList);
+      if (opts.flapRateConf) params.flap_rate_conf = JSON.parse(opts.flapRateConf);
+      if (opts.fourmemeRateConf) params.fourmeme_rate_conf = JSON.parse(opts.fourmemeRateConf);
+      if (opts.bagsFeeShareList) params.bags_fee_share_list = JSON.parse(opts.bagsFeeShareList);
+      if (opts.bonkModel) params.bonk_model = opts.bonkModel;
+      if (opts.buyWallets) params.buy_wallets = JSON.parse(opts.buyWallets);
+      if (opts.snipBuyWallets) params.snip_buy_wallets = JSON.parse(opts.snipBuyWallets);
+      if (opts.intervalSeconds != null) params.interval_seconds = opts.intervalSeconds;
+      if (opts.buyTradeConfig) params.buy_trade_config = JSON.parse(opts.buyTradeConfig);
+      if (opts.sellTradeConfig) params.sell_trade_config = JSON.parse(opts.sellTradeConfig);
+      if (opts.sellConfigs) params.sell_configs = JSON.parse(opts.sellConfigs);
       const client = new OpenApiClient(getConfig(true));
       const data = await client.createToken(params).catch(exitOnError);
       printResult(data, opts.raw);
