@@ -784,7 +784,7 @@ gmgn-cli cooking create \
 | `--is-mayhem` | No | Enable Mayhem mode (**Pump.fun only**) |
 | `--is-cashback` | No | Enable Cashback (**Pump.fun only**) |
 | `--is-buy-back` | No | Enable Agent Auto Buyback (**Pump.fun only**) |
-| `--pump-fee-share-list` | No | Fee share list as JSON array: `[{"provider":"github","username":"<handle>","basic_points":<n>}]` (**Pump.fun only**) |
+| `--pump-fee-share-list` | No | Fee share list as JSON array: `[{"provider":"twitter","username":"<handle>","basic_points":<n>}]` (**Pump.fun only**) |
 | `--flap-rate-conf` | No | Rate config as JSON object (**Flap only**) |
 | `--fourmeme-rate-conf` | No | Rate config as JSON object (**FourMeme only**) |
 | `--bags-fee-share-list` | No | Fee share list as JSON array: `[{"provider":"twitter","username":"<handle>","basic_points":<n>}]` (**BAGS only**) |

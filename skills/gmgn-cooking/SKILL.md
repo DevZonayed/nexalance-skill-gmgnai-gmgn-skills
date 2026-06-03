@@ -163,7 +163,7 @@ gmgn-cli cooking stats [--raw]
 | `--is-mayhem` | No | Enable Mayhem mode (**Pump.fun only**) |
 | `--is-cashback` | No | Enable Cashback (**Pump.fun only**) |
 | `--is-buy-back` | No | Enable Agent Auto Buyback (**Pump.fun only**) |
-| `--pump-fee-share-list` | No | Pump.fun fee share list as JSON array: `[{"provider":"github","username":"<handle>","basic_points":<n>}]` (**Pump.fun only**) |
+| `--pump-fee-share-list` | No | Pump.fun fee share list as JSON array: `[{"provider":"twitter","username":"<handle>","basic_points":<n>}]` (**Pump.fun only**) |
 | `--flap-rate-conf` | No | Flap rate config as JSON object (**Flap only**) |
 | `--fourmeme-rate-conf` | No | FourMeme rate config as JSON object (**FourMeme only**) |
 | `--bags-fee-share-list` | No | BAGS fee share list as JSON array: `[{"provider":"twitter","username":"<handle>","basic_points":<n>}]` (**BAGS only**) |
@@ -206,11 +206,11 @@ Never set a fee-share split without the user's explicit instruction — it perma
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `provider` | string | Yes | `github` / `wallet` |
-| `username` | string | Yes | Username for `github`; a SOL address when `wallet` |
+| `provider` | string | Yes | `solana` / `twitter` / `github` |
+| `username` | string | Yes | Platform username; a SOL address when `provider` = `solana` |
 | `basic_points` | int | Yes | Share in bps — all entries must sum to **10000** |
 
-Example: `--pump-fee-share-list '[{"provider":"github","username":"handle","basic_points":10000}]'`
+Example: `--pump-fee-share-list '[{"provider":"twitter","username":"handle","basic_points":10000}]'`
 
 ### Bonk (`--dex bonk`)
 
