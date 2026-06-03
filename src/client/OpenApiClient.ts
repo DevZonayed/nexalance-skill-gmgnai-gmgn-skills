@@ -171,8 +171,8 @@ export interface TokenSignalGroup {
 }
 
 export interface PumpFeeShareInfo {
-  provider: string;       // "github" | "wallet"
-  username: string;       // username for github; a SOL address when wallet
+  provider: string;       // "solana" | "twitter" | "github"
+  username: string;       // platform username; a SOL address when provider = "solana"
   basic_points: number;
 }
 
