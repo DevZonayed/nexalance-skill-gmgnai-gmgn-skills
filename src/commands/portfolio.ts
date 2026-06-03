@@ -51,7 +51,7 @@ export function registerPortfolioCommands(program: Command): void {
     .option("--token <address>", "Filter by token contract address")
     .option("--limit <n>", "Page size", parseInt)
     .option("--cursor <cursor>", "Pagination cursor")
-    .option("--type <type...>", "Activity type filter, repeatable: buy / sell / add / remove / transfer")
+    .option("--type <type...>", "Activity type filter, repeatable: buy / sell / transferIn / transferOut / add / remove")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
       validateChain(opts.chain);

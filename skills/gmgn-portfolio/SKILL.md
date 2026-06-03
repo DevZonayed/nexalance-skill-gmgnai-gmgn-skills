@@ -186,7 +186,7 @@ gmgn-cli portfolio token-balance \
 | `--token <address>` | Filter by token |
 | `--limit <n>` | Page size |
 | `--cursor <cursor>` | Pagination cursor (pass the `next` value from the previous response) |
-| `--type <type>` | Repeatable: `buy` / `sell` / `add` / `remove` / `transfer` |
+| `--type <type>` | Repeatable: `buy` / `sell` / `transferIn` / `transferOut` / `add` / `remove` |
 
 The activity response includes a `next` field. Pass it to `--cursor` to fetch the next page.
 
