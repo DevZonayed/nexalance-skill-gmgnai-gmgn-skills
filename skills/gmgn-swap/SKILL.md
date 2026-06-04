@@ -522,7 +522,7 @@ gmgn-cli order strategy create \
   --sub-order-type take_profit \
   --check-price 0.002 \
   --amount-in 1000000 \
-  --slippage 0.01
+  --slippage 30
 
 # Create a stop-loss order: sell when price drops to target (limit_order)
 gmgn-cli order strategy create \
@@ -534,7 +534,7 @@ gmgn-cli order strategy create \
   --sub-order-type stop_loss \
   --check-price 0.0005 \
   --amount-in-percent 100 \
-  --slippage 0.01
+  --slippage 30
 
 # Create a smart_trade with buy_low entry + take-profit + stop-loss (smart_trade)
 gmgn-cli order strategy create \
@@ -546,7 +546,8 @@ gmgn-cli order strategy create \
   --sub-order-type mix_trade \
   --open-price 0.000082 \
   --amount-in 1000000 \
-  --slippage 0.01 \
+  --slippage 30 \
+  --sell-param '{"slippage":30,"priority_fee":"0.00001","tip_fee":"0.00001"}' \
   --condition-orders '[{"order_type":"buy_low","side":"buy","check_price":"0.00008"},{"order_type":"profit_stop","side":"sell","price_scale":"100","sell_ratio":"50"},{"order_type":"loss_stop","side":"sell","price_scale":"50","sell_ratio":"100"}]'
 ```
 
@@ -568,7 +569,9 @@ gmgn-cli order strategy create \
 | `--expire-in` | No | all | Order expiry in seconds |
 | `--sell-ratio-type` | No | all | `buy_amount` (default) — when triggered, sells a fixed token amount stored at strategy creation time; `hold_amount` — when triggered, sells a fixed percentage of the position held at trigger time |
 | `--quote-investment` | No | all | Quote token investment amount (`smart_trade`) |
-| `--slippage` | No | all | Slippage tolerance, e.g. `0.01` = 1%. Mutually exclusive with `--auto-slippage` |
+| `--sell-param` | Yes (`smart_trade`) | all | JSON object of sell-side trade params (slippage, fee, gas, etc.) used when a TP/SL condition fires. **Required for `smart_trade`.** Same fields as the root TradeParam; `slippage` is 0–100 integer. |
+| `--buy-param` | No | all | JSON object of buy-side trade params override for `smart_trade`. Same fields as root TradeParam; `slippage` is 0–100 integer. |
+| `--slippage` | No | all | Slippage tolerance as an integer 0–100, e.g. `30` = 30%. Mutually exclusive with `--auto-slippage`. Defaults to auto-slippage if neither is set. |
 | `--auto-slippage` | No | all | Enable automatic slippage |
 | `--priority-fee` | No | `sol` | Priority fee in SOL (≥ 0.00001). **Required** for SOL. |
 | `--tip-fee` | No | `sol` / `bsc` | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB). **Required** for SOL. |
