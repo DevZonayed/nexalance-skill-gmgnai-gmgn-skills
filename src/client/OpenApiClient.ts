@@ -127,7 +127,7 @@ export interface StrategyCreateParams {
   quote_token: string;
   order_type: string;
   sub_order_type: string;
-  check_price: string;
+  check_price?: string;
   open_price?: string;
   amount_in?: string;
   amount_in_percent?: string;
@@ -148,6 +148,8 @@ export interface StrategyCreateParams {
   priority_fee?: string;
   tip_fee?: string;
   custom_rpc?: string;
+  condition_orders?: StrategyConditionOrder[];
+  quote_investment?: string;
 }
 
 export interface StrategyCancelParams {

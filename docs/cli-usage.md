@@ -608,14 +608,17 @@ gmgn-cli order strategy create \
   --from <wallet_address> \
   --base-token <base_token_address> \
   --quote-token <quote_token_address> \
-  --order-type <limit_order> \
-  --sub-order-type <buy_low|buy_high|stop_loss|take_profit> \
-  --check-price <price> \
+  --order-type <limit_order|smart_trade> \
+  --sub-order-type <buy_low|buy_high|stop_loss|take_profit|mix_trade> \
+  [--check-price <price>] \
+  [--open-price <price>] \
   [--amount-in <amount> | --amount-in-percent <pct>] \
   [--slippage <n> | --auto-slippage] \
   [--limit-price-mode <exact|slippage>] \
   [--expire-in <seconds>] \
   [--sell-ratio-type <buy_amount|hold_amount>] \
+  [--quote-investment <amount>] \
+  [--condition-orders <json>] \
   [--priority-fee <sol>] \
   [--tip-fee <amount>] \
   [--gas-price <gwei>] \
@@ -625,18 +628,21 @@ gmgn-cli order strategy create \
 
 | Option | Required | Description |
 |--------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` |
 | `--from` | Yes | Wallet address (must match API Key binding) |
 | `--base-token` | Yes | Base token contract address |
 | `--quote-token` | Yes | Quote token contract address |
-| `--order-type` | Yes | Order type: `limit_order` |
-| `--sub-order-type` | Yes | Sub-order type: `buy_low` / `buy_high` / `stop_loss` / `take_profit` |
-| `--check-price` | Yes | Trigger check price |
+| `--order-type` | Yes | Order type: `limit_order` / `smart_trade` |
+| `--sub-order-type` | Yes | `limit_order`: `buy_low` / `buy_high` / `stop_loss` / `take_profit`; `smart_trade` with condition_orders: `mix_trade` |
+| `--check-price` | No* | Trigger check price — required for `limit_order`; omit for `smart_trade` (trigger is in the `buy_low` condition order) |
+| `--open-price` | No | Open price of the position |
 | `--amount-in` | No* | Input amount (smallest unit); required unless `--amount-in-percent` is used |
 | `--amount-in-percent` | No* | Input as percentage (e.g. `50` = 50%); required unless `--amount-in` is used |
 | `--limit-price-mode` | No | `exact` / `slippage` (default: `slippage`) |
 | `--expire-in` | No | Order expiry in seconds |
 | `--sell-ratio-type` | No | `buy_amount` (default) / `hold_amount` |
+| `--quote-investment` | No | Quote token investment amount (`smart_trade`) |
+| `--condition-orders` | No | JSON array of condition sub-orders for `smart_trade`. Must include one `buy_low` entry (with `check_price` lower than `open_price`) plus at least one TP/SL entry |
 | `--slippage` | No | Slippage tolerance, e.g. `0.01` = 1% |
 | `--auto-slippage` | No | Enable automatic slippage |
 | `--priority-fee` | No | Priority fee in SOL (**required for SOL chain**) |
@@ -730,7 +736,6 @@ gmgn-cli cooking create \
   --buy-amt <amount> \
   [--image <base64> | --image-url <url>] \
   [--slippage <n> | --auto-slippage] \
-  [--description <text>] \
   [--website <url>] [--twitter <url>] [--telegram <url>] \
   [--fee <amount>] [--priority-fee <sol>] [--tip-fee <amount>] [--gas-price <amount>] \
   [--max-fee-per-gas <amount>] [--max-priority-fee-per-gas <amount>] \
@@ -761,7 +766,6 @@ gmgn-cli cooking create \
 | `--image-url` | No* | Token logo URL; required unless `--image` is used |
 | `--slippage` | No* | Slippage tolerance, e.g. `0.01` = 1%; required unless `--auto-slippage` is used |
 | `--auto-slippage` | No* | Enable automatic slippage; required unless `--slippage` is used |
-| `--description` | No | Token description / project pitch |
 | `--website` | No | Website URL |
 | `--twitter` | No | Twitter link |
 | `--telegram` | No | Telegram link |
