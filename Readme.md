@@ -528,7 +528,7 @@ gmgn-cli swap \
   --input-token <input-token-addr> \
   --output-token <output-token-addr> \
   --amount 1000000 \
-  --slippage 0.01
+  --slippage 30
 
 # Submit swap with automatic slippage
 gmgn-cli swap \
@@ -555,7 +555,7 @@ gmgn-cli order quote \
   --input-token <input-token-addr> \
   --output-token <output-token-addr> \
   --amount 1000000 \
-  --slippage 0.01
+  --slippage 30
 
 # Quotes use signed auth and require GMGN_PRIVATE_KEY on every chain
 gmgn-cli order quote \
@@ -564,7 +564,7 @@ gmgn-cli order quote \
   --input-token <input-token-addr> \
   --output-token <output-token-addr> \
   --amount 1000000000000000000 \
-  --slippage 0.01
+  --slippage 30
 
 # Query order
 gmgn-cli order get --chain sol --order-id <order-id>
@@ -582,7 +582,7 @@ gmgn-cli multi-swap \
   --input-token <input-token-addr> \
   --output-token <output-token-addr> \
   --input-amount '{"<addr1>":"1000000","<addr2>":"2000000"}' \
-  --slippage 0.01
+  --slippage 30
 ```
 
 > `order quote` uses signed auth on `sol` / `bsc` / `base` / `eth` and requires `GMGN_PRIVATE_KEY`.
@@ -597,7 +597,7 @@ gmgn-cli swap \
   --input-token <input-token-addr> \
   --output-token <output-token-addr> \
   --amount <amount> \
-  --slippage 0.01 \
+  --slippage 30 \
   --gas-level high
 
 # Let GMGN auto-select the optimal gas fee for condition orders
@@ -607,7 +607,7 @@ gmgn-cli swap \
   --input-token <input-token-addr> \
   --output-token <output-token-addr> \
   --amount <amount> \
-  --slippage 0.01 \
+  --slippage 30 \
   --condition-orders '[...]' \
   --auto-fee
 ```
@@ -627,7 +627,7 @@ gmgn-cli swap \
   --input-token So11111111111111111111111111111111111111112 \
   --output-token <token_A_address> \
   --amount 10000000 \
-  --slippage 0.3 \
+  --slippage 30 \
   --anti-mev \
   --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"100","sell_ratio":"50"},{"order_type":"profit_stop","side":"sell","price_scale":"300","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"65","sell_ratio":"100"}]' \
   --sell-ratio-type hold_amount
@@ -646,7 +646,7 @@ gmgn-cli swap \
   --input-token So11111111111111111111111111111111111111112 \
   --output-token <token_A_address> \
   --amount 10000000 \
-  --slippage 0.3 \
+  --slippage 30 \
   --anti-mev \
   --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"100","sell_ratio":"50"},{"order_type":"profit_stop","side":"sell","price_scale":"300","sell_ratio":"50"},{"order_type":"loss_stop","side":"sell","price_scale":"65","sell_ratio":"100"}]' \
   --sell-ratio-type buy_amount
@@ -668,7 +668,7 @@ gmgn-cli order strategy create \
   --sub-order-type take_profit \
   --check-price 0.002 \
   --amount-in-percent 100 \
-  --slippage 0.01
+  --slippage 30
 
 # Create a stop-loss order
 gmgn-cli order strategy create \
@@ -679,7 +679,7 @@ gmgn-cli order strategy create \
   --sub-order-type stop_loss \
   --check-price 0.0005 \
   --amount-in-percent 100 \
-  --slippage 0.01
+  --slippage 30
 
 # List open strategy orders (requires private key)
 gmgn-cli order strategy list --chain sol
@@ -698,7 +698,7 @@ gmgn-cli cooking \
   --input-token So11111111111111111111111111111111111111112 \
   --output-token <token_address> \
   --amount 1000000000 \
-  --slippage 0.3 \
+  --slippage 30 \
   --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"100","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"50","sell_ratio":"100"}]'
 ```
 

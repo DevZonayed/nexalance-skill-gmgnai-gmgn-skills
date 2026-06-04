@@ -552,7 +552,7 @@ gmgn-cli swap \
   --input-token <input-token-addr> \
   --output-token <output-token-addr> \
   --amount 1000000 \
-  --slippage 0.01
+  --slippage 30
 
 # 提交兑换（自动滑点）
 gmgn-cli swap \
@@ -579,7 +579,7 @@ gmgn-cli order quote \
   --input-token <input-token-addr> \
   --output-token <output-token-addr> \
   --amount 1000000 \
-  --slippage 0.01
+  --slippage 30
 
 # 所有链上的 quote 都走关键鉴权，需要 GMGN_PRIVATE_KEY
 gmgn-cli order quote \
@@ -588,7 +588,7 @@ gmgn-cli order quote \
   --input-token <input-token-addr> \
   --output-token <output-token-addr> \
   --amount 1000000000000000000 \
-  --slippage 0.01
+  --slippage 30
 
 # 查询订单状态
 gmgn-cli order get --chain sol --order-id <order-id>
@@ -606,7 +606,7 @@ gmgn-cli multi-swap \
   --input-token <input-token-addr> \
   --output-token <output-token-addr> \
   --input-amount '{"<addr1>":"1000000","<addr2>":"2000000"}' \
-  --slippage 0.01
+  --slippage 30
 ```
 
 > `order quote` 在 `sol` / `bsc` / `base` / `eth` 上都走关键鉴权，必须配置 `GMGN_PRIVATE_KEY`。
@@ -621,7 +621,7 @@ gmgn-cli swap \
   --input-token <input-token-addr> \
   --output-token <output-token-addr> \
   --amount <amount> \
-  --slippage 0.01 \
+  --slippage 30 \
   --gas-level high
 
 # 策略单（condition-orders）由 GMGN 自动选择最优 Gas Fee
@@ -631,7 +631,7 @@ gmgn-cli swap \
   --input-token <input-token-addr> \
   --output-token <output-token-addr> \
   --amount <amount> \
-  --slippage 0.01 \
+  --slippage 30 \
   --condition-orders '[...]' \
   --auto-fee
 ```
@@ -651,7 +651,7 @@ gmgn-cli swap \
   --input-token So11111111111111111111111111111111111111112 \
   --output-token <token_A_address> \
   --amount 10000000 \
-  --slippage 0.3 \
+  --slippage 30 \
   --anti-mev \
   --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"100","sell_ratio":"50"},{"order_type":"profit_stop","side":"sell","price_scale":"300","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"65","sell_ratio":"100"}]' \
   --sell-ratio-type hold_amount
@@ -670,7 +670,7 @@ gmgn-cli swap \
   --input-token So11111111111111111111111111111111111111112 \
   --output-token <token_A_address> \
   --amount 10000000 \
-  --slippage 0.3 \
+  --slippage 30 \
   --anti-mev \
   --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"100","sell_ratio":"50"},{"order_type":"profit_stop","side":"sell","price_scale":"300","sell_ratio":"50"},{"order_type":"loss_stop","side":"sell","price_scale":"65","sell_ratio":"100"}]' \
   --sell-ratio-type buy_amount
@@ -692,7 +692,7 @@ gmgn-cli order strategy create \
   --sub-order-type take_profit \
   --check-price 0.002 \
   --amount-in-percent 100 \
-  --slippage 0.01
+  --slippage 30
 
 # 创建止损单
 gmgn-cli order strategy create \
@@ -703,7 +703,7 @@ gmgn-cli order strategy create \
   --sub-order-type stop_loss \
   --check-price 0.0005 \
   --amount-in-percent 100 \
-  --slippage 0.01
+  --slippage 30
 
 # 查看当前挂单（需要私钥）
 gmgn-cli order strategy list --chain sol
@@ -722,7 +722,7 @@ gmgn-cli cooking \
   --input-token So11111111111111111111111111111111111111112 \
   --output-token <token_address> \
   --amount 1000000000 \
-  --slippage 0.3 \
+  --slippage 30 \
   --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"100","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"50","sell_ratio":"100"}]'
 ```
 
