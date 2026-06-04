@@ -1,7 +1,7 @@
 ---
 name: gmgn-swap
 description: "[FINANCIAL EXECUTION] Buy and sell meme coins and crypto tokens on Solana, BSC, Base, or Ethereum — single swap, multi-wallet batch trading, limit orders, stop loss, take profit, trailing stop loss, trailing take profit via GMGN API. Requires explicit user confirmation. Use when user asks to buy, sell, or swap a token, trade from multiple wallets, set a limit order, stop loss, take profit, or check order status."
-argument-hint: "[--chain <chain> --from <wallet> --input-token <addr> --output-token <addr> --amount <n>] | [order get --chain <chain> --order-id <id>] | [gas-price --chain <eth|bsc|base|sol>] | [order strategy list --chain <chain> --group-tag <LimitOrder|STMix>] | [order strategy create --chain <chain> --order-type limit_order --sub-order-type <buy_low|buy_high|stop_loss|take_profit> ...]"
+argument-hint: "[--chain <chain> --from <wallet> --input-token <addr> --output-token <addr> --amount <n>] | [order get --chain <chain> --order-id <id>] | [gas-price --chain <eth|bsc|base|sol>] | [order strategy list --chain <chain> --group-tag <LimitOrder|STMix>] | [order strategy create --chain <chain> --order-type <limit_order|smart_trade> --sub-order-type <buy_low|buy_high|stop_loss|take_profit|mix_trade> ...]"
 metadata:
   cliHelp: "gmgn-cli swap --help"
 ---
@@ -512,7 +512,7 @@ All fields are omitempty — fields unsupported by a chain are omitted. Units ar
 ## `order strategy create` Usage
 
 ```bash
-# Create a take-profit order: sell when price rises to target
+# Create a take-profit order: sell when price rises to target (limit_order)
 gmgn-cli order strategy create \
   --chain sol \
   --from <wallet_address> \
@@ -524,7 +524,7 @@ gmgn-cli order strategy create \
   --amount-in 1000000 \
   --slippage 0.01
 
-# Create a stop-loss order: sell when price drops to target
+# Create a stop-loss order: sell when price drops to target (limit_order)
 gmgn-cli order strategy create \
   --chain sol \
   --from <wallet_address> \
@@ -535,6 +535,19 @@ gmgn-cli order strategy create \
   --check-price 0.0005 \
   --amount-in-percent 100 \
   --slippage 0.01
+
+# Create a smart_trade with buy_low entry + take-profit + stop-loss (smart_trade)
+gmgn-cli order strategy create \
+  --chain sol \
+  --from <wallet_address> \
+  --base-token <token_address> \
+  --quote-token <sol_address> \
+  --order-type smart_trade \
+  --sub-order-type mix_trade \
+  --open-price 0.000082 \
+  --amount-in 1000000 \
+  --slippage 0.01 \
+  --condition-orders '[{"order_type":"buy_low","side":"buy","check_price":"0.00008"},{"order_type":"profit_stop","side":"sell","price_scale":"100","sell_ratio":"50"},{"order_type":"loss_stop","side":"sell","price_scale":"50","sell_ratio":"100"}]'
 ```
 
 ## `order strategy create` Parameters
@@ -545,14 +558,16 @@ gmgn-cli order strategy create \
 | `--from` | Yes | all | Wallet address (must match API Key binding) |
 | `--base-token` | Yes | all | Base token contract address |
 | `--quote-token` | Yes | all | Quote token contract address |
-| `--order-type` | Yes | all | Order type: `limit_order` |
-| `--sub-order-type` | Yes | all | Sub-order type: `buy_low` / `buy_high` / `stop_loss` / `take_profit` |
-| `--check-price` | Yes | all | Trigger price in USD — the order fires when the token's USD price crosses this value |
+| `--order-type` | Yes | all | Order type: `limit_order` / `smart_trade` |
+| `--sub-order-type` | Yes | all | `limit_order`: `buy_low` / `buy_high` / `stop_loss` / `take_profit`; `smart_trade` with condition_orders: `mix_trade` |
+| `--check-price` | No* | all | Trigger price — required for `limit_order`; omit for `smart_trade` (trigger is in the `buy_low` condition order) |
+| `--open-price` | No | all | Open price of the position |
 | `--amount-in` | No* | all | Input amount (smallest unit). Mutually exclusive with `--amount-in-percent` |
 | `--amount-in-percent` | No* | all | Input as percentage (e.g. `50` = 50%). Mutually exclusive with `--amount-in` |
 | `--limit-price-mode` | No | all | `exact` / `slippage` (default: `slippage`) |
 | `--expire-in` | No | all | Order expiry in seconds |
 | `--sell-ratio-type` | No | all | `buy_amount` (default) — when triggered, sells a fixed token amount stored at strategy creation time; `hold_amount` — when triggered, sells a fixed percentage of the position held at trigger time |
+| `--quote-investment` | No | all | Quote token investment amount (`smart_trade`) |
 | `--slippage` | No | all | Slippage tolerance, e.g. `0.01` = 1%. Mutually exclusive with `--auto-slippage` |
 | `--auto-slippage` | No | all | Enable automatic slippage |
 | `--priority-fee` | No | `sol` | Priority fee in SOL (≥ 0.00001). **Required** for SOL. |
@@ -563,6 +578,7 @@ gmgn-cli order strategy create \
 | `--max-fee-per-gas` | No | `bsc` / `base` / `eth` | EIP-1559 max fee per gas. Clamped per chain minimums. |
 | `--max-priority-fee-per-gas` | No | `bsc` / `base` / `eth` | EIP-1559 max priority fee per gas. Clamped per chain minimums; capped to `--max-fee-per-gas`. |
 | `--anti-mev` | No | sol / bsc / eth | Enable anti-MEV protection. Not supported on `base`. |
+| `--condition-orders` | No | all | JSON array of condition sub-orders for `smart_trade`. Must include one `buy_low` entry (with `check_price` lower than `open_price`) plus at least one TP/SL entry. |
 
 ### `order strategy create` Response Fields
 

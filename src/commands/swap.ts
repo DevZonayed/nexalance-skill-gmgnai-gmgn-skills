@@ -203,14 +203,16 @@ export function registerSwapCommands(program: Command): void {
     .requiredOption("--from <address>", "Wallet address (must match API Key binding)")
     .requiredOption("--base-token <address>", "Base token contract address")
     .requiredOption("--quote-token <address>", "Quote token contract address")
-    .requiredOption("--order-type <type>", "Order type: limit_order")
-    .requiredOption("--sub-order-type <type>", "Sub-order type: buy_low / buy_high / stop_loss / take_profit")
-    .requiredOption("--check-price <price>", "Trigger check price")
+    .requiredOption("--order-type <type>", "Order type: limit_order / smart_trade")
+    .requiredOption("--sub-order-type <type>", "Sub-order type: buy_low / buy_high / stop_loss / take_profit (limit_order); mix_trade (smart_trade with condition_orders)")
+    .option("--check-price <price>", "Trigger check price (required for limit_order; omit for smart_trade)")
+    .option("--open-price <price>", "Open price of the position")
     .option("--amount-in <amount>", "Input amount (smallest unit)")
     .option("--amount-in-percent <pct>", "Input amount as a percentage (e.g. 50 = 50%)")
     .option("--limit-price-mode <mode>", "Price mode: exact / slippage (default: slippage)")
     .option("--expire-in <seconds>", "Order expiry in seconds", parseInt)
     .option("--sell-ratio-type <type>", "Sell ratio basis: buy_amount (default) / hold_amount")
+    .option("--quote-investment <amount>", "Quote token investment amount (smart_trade)")
     .option("--slippage <n>", "Slippage tolerance (e.g. 0.01 = 1%)", parseFloat)
     .option("--auto-slippage", "Enable automatic slippage")
     .option("--priority-fee <sol>", "Priority fee in SOL (required for SOL chain)")
@@ -221,6 +223,7 @@ export function registerSwapCommands(program: Command): void {
     .option("--max-fee-per-gas <amount>", "EIP-1559 max fee per gas (BSC / BASE / ETH)")
     .option("--max-priority-fee-per-gas <amount>", "EIP-1559 max priority fee per gas (BSC / BASE / ETH)")
     .option("--anti-mev", "Enable anti-MEV protection")
+    .option("--condition-orders <json>", "JSON array of condition sub-orders for smart_trade (must include a buy_low entry + TP/SL entries)")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
       if (!opts.amountIn && !opts.amountInPercent) {
@@ -239,13 +242,15 @@ export function registerSwapCommands(program: Command): void {
         quote_token: opts.quoteToken,
         order_type: opts.orderType,
         sub_order_type: opts.subOrderType,
-        check_price: opts.checkPrice,
       };
+      if (opts.checkPrice) params.check_price = opts.checkPrice;
+      if (opts.openPrice) params.open_price = opts.openPrice;
       if (opts.amountIn) params.amount_in = opts.amountIn;
       if (opts.amountInPercent) params.amount_in_percent = opts.amountInPercent;
       if (opts.limitPriceMode) params.limit_price_mode = opts.limitPriceMode;
       if (opts.expireIn != null) params.expire_in = opts.expireIn;
       if (opts.sellRatioType) params.sell_ratio_type = opts.sellRatioType;
+      if (opts.quoteInvestment) params.quote_investment = opts.quoteInvestment;
       if (opts.slippage != null) params.slippage = opts.slippage;
       if (opts.autoSlippage) params.auto_slippage = true;
       if (opts.priorityFee) params.priority_fee = opts.priorityFee;
@@ -256,6 +261,10 @@ export function registerSwapCommands(program: Command): void {
       if (opts.maxFeePerGas) params.max_fee_per_gas = opts.maxFeePerGas;
       if (opts.maxPriorityFeePerGas) params.max_priority_fee_per_gas = opts.maxPriorityFeePerGas;
       if (opts.antiMev) params.is_anti_mev = true;
+      if (opts.conditionOrders) {
+        try { params.condition_orders = JSON.parse(opts.conditionOrders); }
+        catch { console.error("[gmgn-cli] --condition-orders must be valid JSON"); process.exit(1); }
+      }
       const client = new OpenApiClient(getConfig(true));
       const data = await client.createStrategyOrder(params).catch(exitOnError);
       printResult(data, opts.raw);
