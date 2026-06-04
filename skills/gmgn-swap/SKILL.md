@@ -18,7 +18,7 @@ Use the `gmgn-cli` tool to submit a token swap or query an existing order. `GMGN
 
 - **Smallest unit** — `--amount` is always in the token's smallest indivisible unit, not human-readable amounts. For SOL: 1 SOL = 1,000,000,000 lamports. For EVM tokens: depends on decimals (most ERC-20 tokens use 18 decimals). Always convert before passing to the command — do not pass human amounts directly.
 
-- **`slippage`** — Price tolerance expressed as a decimal, not a percentage. `0.01` = 1% slippage. `0.5` = 50% slippage. If the price moves beyond this threshold before the transaction confirms, the swap is rejected. Use `--auto-slippage` for volatile tokens to let GMGN set an appropriate value automatically.
+- **`slippage`** — Price tolerance as an integer 0–100, e.g. `30` = 30%. If the price moves beyond this threshold before the transaction confirms, the swap is rejected. Use `--auto-slippage` for volatile tokens to let GMGN set an appropriate value automatically.
 
 - **`--amount` vs `--percent`** — Mutually exclusive. `--amount` specifies an exact input quantity (in smallest unit). `--percent` sells a percentage of the current balance and is only valid when `input_token` is NOT a currency (SOL/BNB/ETH/USDC). Never use `--percent` to spend a fraction of SOL/BNB/ETH.
 
@@ -145,7 +145,7 @@ gmgn-cli swap \
   --input-token <input_token_address> \
   --output-token <output_token_address> \
   --amount 1000000 \
-  --slippage 0.01
+  --slippage 30
 
 # With automatic slippage
 gmgn-cli swap \
@@ -184,7 +184,7 @@ gmgn-cli swap \
 | `--output-token` | Yes | all | Output token contract address |
 | `--amount` | No* | all | Input amount in smallest unit. **Mutually exclusive with `--percent`** — provide one or the other, never both. Required unless `--percent` is used. |
 | `--percent <pct>` | No* | all | Sell percentage of `input_token`, e.g. `50` = 50%, `1` = 1%. Sets `input_amount` to `0` automatically. **Mutually exclusive with `--amount`. Only valid when `input_token` is NOT a currency (SOL/BNB/ETH/USDC).** |
-| `--slippage <n>` | No | all | Slippage tolerance, e.g. `0.01` = 1%. **Mutually exclusive with `--auto-slippage`** — use one or the other. |
+| `--slippage <n>` | No | all | Slippage tolerance as an integer 0–100, e.g. `30` = 30%. **Mutually exclusive with `--auto-slippage`** — use one or the other. |
 | `--auto-slippage` | No | all | Enable automatic slippage. **Mutually exclusive with `--slippage`.** |
 | `--min-output <n>` | No | all | Minimum output amount |
 | `--anti-mev` | No | sol / bsc / eth | Enable anti-MEV protection — **recommended**; protects against frontrunning and sandwich attacks. Default: on. **Not supported on `base`.** |
@@ -228,7 +228,7 @@ gmgn-cli swap \
   --input-token So11111111111111111111111111111111111111112 \
   --output-token <token_A_address> \
   --amount 10000000 \
-  --slippage 0.3 \
+  --slippage 30 \
   --anti-mev \
   --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"100","sell_ratio":"50"},{"order_type":"profit_stop","side":"sell","price_scale":"300","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"65","sell_ratio":"100"}]' \
   --sell-ratio-type hold_amount
@@ -246,7 +246,7 @@ gmgn-cli swap \
   --input-token So11111111111111111111111111111111111111112 \
   --output-token <token_A_address> \
   --amount 10000000 \
-  --slippage 0.3 \
+  --slippage 30 \
   --anti-mev \
   --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"100","sell_ratio":"50"},{"order_type":"profit_stop","side":"sell","price_scale":"300","sell_ratio":"50"},{"order_type":"loss_stop","side":"sell","price_scale":"65","sell_ratio":"100"}]' \
   --sell-ratio-type buy_amount
@@ -358,7 +358,7 @@ gmgn-cli multi-swap \
   --input-token <input_token_address> \
   --output-token <output_token_address> \
   --input-amount '{"<addr1>":"1000000","<addr2>":"2000000"}' \
-  --slippage 0.01
+  --slippage 30
 
 # Sell a percentage of each wallet's balance (use --input-amount-bps)
 gmgn-cli multi-swap \
@@ -367,7 +367,7 @@ gmgn-cli multi-swap \
   --input-token <token_address> \
   --output-token <sol_address> \
   --input-amount-bps '{"<addr1>":"5000","<addr2>":"10000"}' \
-  --slippage 0.01
+  --slippage 30
 
 # With per-wallet take-profit / stop-loss (condition_orders)
 gmgn-cli multi-swap \
@@ -376,7 +376,7 @@ gmgn-cli multi-swap \
   --input-token So11111111111111111111111111111111111111112 \
   --output-token <token_address> \
   --input-amount '{"<addr1>":"1000000","<addr2>":"2000000"}' \
-  --slippage 0.3 \
+  --slippage 30 \
   --priority-fee 0.00001 \
   --tip-fee 0.00001 \
   --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"100","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"50","sell_ratio":"100"}]'
@@ -388,7 +388,7 @@ gmgn-cli multi-swap \
   --input-token 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48 \
   --output-token <token_address> \
   --input-amount '{"<0xaddr1>":"1000000","<0xaddr2>":"2000000"}' \
-  --slippage 0.01 \
+  --slippage 30 \
   --gas-price 5
 ```
 
@@ -403,7 +403,7 @@ gmgn-cli multi-swap \
 | `--input-amount` | No* | all | JSON map of `wallet_address → input amount` (smallest unit). One of `--input-amount`, `--input-amount-bps`, or `--output-amount` is required. |
 | `--input-amount-bps` | No* | all | JSON map of `wallet_address → percent in bps` (1–10000; 5000 = 50%). Only valid when `input_token` is NOT a currency. |
 | `--output-amount` | No* | all | JSON map of `wallet_address → target output amount` (smallest unit). |
-| `--slippage <n>` | No | all | Slippage tolerance, e.g. `0.01` = 1%. Mutually exclusive with `--auto-slippage`. |
+| `--slippage <n>` | No | all | Slippage tolerance as an integer 0–100, e.g. `30` = 30%. Mutually exclusive with `--auto-slippage`. |
 | `--auto-slippage` | No | all | Enable automatic slippage. |
 | `--anti-mev` | No | sol / bsc / eth | Enable anti-MEV protection. Not supported on `base`. |
 | `--priority-fee <sol>` | No | `sol` | Priority fee in SOL (≥ 0.00001). Required when using `--condition-orders` on SOL. |
@@ -442,7 +442,7 @@ gmgn-cli order quote \
   --input-token <input_token_address> \
   --output-token <output_token_address> \
   --amount <input_amount_smallest_unit> \
-  --slippage 0.01
+  --slippage 30
 ```
 
 ### `order quote` Response Fields

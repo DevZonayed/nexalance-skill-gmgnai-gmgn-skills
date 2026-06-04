@@ -32,7 +32,7 @@ export function registerCookingCommands(program: Command): void {
     .option("--website <url>", "Website URL")
     .option("--twitter <url>", "Twitter link")
     .option("--telegram <url>", "Telegram link")
-    .option("--slippage <n>", "Slippage tolerance (e.g. 0.01 = 1%)", parseFloat)
+    .option("--slippage <n>", "Slippage tolerance (e.g. 30 = 30%)", parseFloat)
     .option("--auto-slippage", "Enable automatic slippage")
     .option("--fee <amount>", "Base gas / fee")
     .option("--priority-fee <sol>", "Priority fee in SOL (SOL only)")
