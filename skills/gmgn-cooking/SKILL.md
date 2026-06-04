@@ -62,6 +62,16 @@ When the user names a platform colloquially (e.g. "pump.fun", "four.meme"), map 
 
 **Anti-MEV** (`--anti-mev`) is only supported on `sol`. Passing it on `bsc` or `base` will return a 400 error.
 
+### Quote Token conversion (when `--raised-token` is set)
+
+`--buy-amt` is **always in native token units** (SOL / BNB / ETH), even when raising with a quote token like USDC / USD1 / USDT. If the user states the amount in the quote token, convert it to native yourself before passing it:
+
+```
+buy_amt_in_native = quote_amount × quote_price / native_price
+```
+
+This conversion applies to **`--buy-amt`, and the `buy_amt` field inside `--buy-wallets` and `--snip-buy-wallets`**. It does **not** apply to `--sell-configs` (`check_price` there is always a USD market cap, not a token amount). Round to the chain's native decimals. When `--raised-token` is empty/native, no conversion is needed.
+
 ## Prerequisites
 
 - `cooking stats`: Only `GMGN_API_KEY` required
@@ -151,7 +161,7 @@ gmgn-cli cooking stats [--raw]
 | `--max-fee-per-gas` | No | Max fee per gas in wei (**EVM only**) |
 | `--max-priority-fee-per-gas` | No | Max priority fee per gas in wei (**EVM only**) |
 | `--anti-mev` | No | Enable anti-MEV protection (**SOL only**; rejected on BSC / BASE) |
-| `--anti-mev-mode` | No | Anti-MEV mode: `normal` / `secure` (**SOL only**) |
+| `--anti-mev-mode` | No | Anti-MEV mode: `off` / `jito` / `0slot` (**SOL only**) |
 | `--raised-token` | No | Raise token symbol. `pump`: `USDC`; `bonk`: `USD1`; `fourmeme`: `USDT` / `USD1`; omit or `""` for native |
 | `--dev-wallet-bps` | No | Dev wallet fee share in basis points (100 = 1%) |
 | `--dev-gas` | No | Dev gas amount |
@@ -180,6 +190,23 @@ gmgn-cli cooking stats [--raw]
 ## Advanced API Fields
 
 The structured flags (`--pump-fee-share-list`, `--bags-fee-share-list`, `--flap-rate-conf`, `--fourmeme-rate-conf`, `--buy-wallets`, `--snip-buy-wallets`, `--buy-trade-config`, `--sell-trade-config`, `--sell-configs`) each accept a **JSON string**. This section documents the exact JSON schema for each.
+
+### Platform capability matrix
+
+Which advanced features each platform supports. Do not send a field a platform does not support.
+
+| Platform | `--dex` | Chain | Platform-specific fields | Bundle (`--buy-wallets`) | Sniper (`--snip-buy-wallets`) | Cashback | Mayhem |
+|---|---|---|---|---|---|---|---|
+| Pump.fun | `pump` | SOL | `--pump-fee-share-list` / `--dev-wallet-bps` / `--is-buy-back` | ✅ up to 12 wallets | ✅ up to 10 | ✅ | ✅ |
+| Bonk | `bonk` | SOL | `--bonk-model` | ❌ | ✅ up to 10 | ❌ | ❌ |
+| BAGS | `bags` | SOL | `--bags-fee-share-list` / `--dev-wallet-bps` | ❌ | ✅ up to 10 | ❌ | ❌ |
+| FourMeme | `fourmeme` | BSC | `--fourmeme-rate-conf` | ✅ up to 3 wallets | ✅ up to 10 | ❌ | ❌ |
+| Flap | `flap` | BSC | `--flap-rate-conf` | ❌ | ✅ up to 10 | ❌ | ❌ |
+| Klik | `klik` | Base | — | ❌ | ✅ up to 10 | ❌ | ❌ |
+| Clanker | `clanker` | Base | — | ❌ | ✅ up to 10 | ❌ | ❌ |
+
+- `--is-cashback` / `--is-mayhem` are **Pump.fun only** — other platforms reject them.
+- Bundle/auto-sell (`--sell-configs`) and sniper (`--snip-buy-wallets`) are available where the matrix shows ✅.
 
 **Basis-points rule:** any field named `*_bps` / `basic_points` is in basis points (`100` = 1%). Where a section says the shares must sum, all entries must add up to exactly **10000** (FourMeme uses whole percents summing to **100** instead — see below).
 
@@ -298,6 +325,29 @@ The buy/sell execution params for these CondMarket orders (slippage, fees, anti-
 > - `wallet_addresses` may mix `from_address` and `buy_wallets` entries. The server creates `signal_cooking` for snipe wallets and `pending_sell` for main/bundle wallets automatically.
 > - A wallet can carry multiple strategies (e.g. delay-sell 50%, then limit-sell the rest); each applies independently.
 
+### TradeParam (`--buy-trade-config` / `--sell-trade-config`)
+
+These tune the **execution params for the CondMarket buy/sell orders** (bundle buys, sniper buys, and auto-sell). They do **not** affect the main creation transaction (the dev tx uses the outer-level `--dev-*` flags). When omitted, they fall back to the outer-level transaction flags.
+
+`--buy-trade-config` / `--sell-trade-config` each accept a single JSON object:
+
+| Field | Type | Description |
+|---|---|---|
+| `slippage` | number | Slippage; only sent when truthy |
+| `fee` | string | Base gas / fee; only sent when truthy |
+| `priority_fee` | string | Priority fee; only sent when truthy |
+| `tip_fee` | string | SOL Jito tip; only sent when truthy |
+| `gas_price` | string | Gas price in wei (EVM); only sent when truthy |
+| `max_priority_fee_per_gas` | string | EVM EIP-1559; only sent when truthy |
+| `max_fee_per_gas` | string | EVM EIP-1559; only sent when truthy |
+| `auto_slippage` | bool | Always sent |
+| `is_anti_mev` | bool | Always sent |
+| `anti_mev_mode` | string | `off` / `jito` / `0slot`; always sent |
+
+Example: `--buy-trade-config '{"slippage":50,"auto_slippage":false,"priority_fee":"0.0005","tip_fee":"0.0001","is_anti_mev":true,"anti_mev_mode":"jito"}'`
+
+> A standard launch with no `buyConfig` sends `{"is_anti_mev":false,"anti_mev_mode":"off"}` and an empty `buy_wallets` list.
+
 ## `cooking create` Response Fields
 
 | Field | Type | Description |
@@ -375,6 +425,57 @@ gmgn-cli cooking create \
   --auto-slippage \
   --sell-configs '[{"sell_type":"delay_sell","delay_sec":60,"sell_ratio":"0.5","wallet_addresses":["<wallet_address>"]}]'
 ```
+
+### Full worked examples
+
+These mirror real launch configurations end-to-end. Copy and adapt — every JSON flag below is a valid payload shape.
+
+**Pump.fun (SOL) — Bundle + Sniper + Auto-Sell + Agent Auto Buyback**
+
+```bash
+gmgn-cli cooking create \
+  --chain sol \
+  --dex pump \
+  --from DevWallet... \
+  --name "Demo Coin" \
+  --symbol DEMO \
+  --buy-amt 0.5 \
+  --image-url https://cdn.example.com/coin.png \
+  --twitter https://x.com/handle/status/123 \
+  --priority-fee 0.0005 \
+  --tip-fee 0.0001 \
+  --is-buy-back \
+  --buy-trade-config '{"slippage":50,"auto_slippage":false,"priority_fee":"0.0005","tip_fee":"0.0001","is_anti_mev":true,"anti_mev_mode":"jito"}' \
+  --buy-wallets '[{"from_address":"Wallet1...","buy_amt":"0.1"},{"from_address":"Wallet2...","buy_amt":"0.1"}]' \
+  --snip-buy-wallets '[{"from_address":"Sniper1...","buy_amt":"0.05"}]' \
+  --sell-configs '[{"sell_type":"delay_sell","sell_ratio":"1","wallet_addresses":["Wallet1..."],"delay_mili_sec":5000}]'
+```
+
+- `--is-buy-back` is the Agent Auto Buyback mode (the backend also sets the agent fee internally).
+- `buy_amt` values in `--buy-wallets` / `--snip-buy-wallets` are in native SOL.
+- Bundle wallets ≤ 12, sniper wallets ≤ 10 on Pump.fun (see capability matrix).
+
+**FourMeme (BSC) — user fee split + raise token USDT**
+
+```bash
+gmgn-cli cooking create \
+  --chain bsc \
+  --dex fourmeme \
+  --from 0xDev... \
+  --name "Demo BSC" \
+  --symbol DBSC \
+  --buy-amt 0.0123 \
+  --image-url https://cdn.example.com/coin.png \
+  --raised-token USDT \
+  --website https://demo.com \
+  --gas-price 1000000000 \
+  --auto-slippage \
+  --fourmeme-rate-conf '{"fee_rate":1,"recipient_rate":50,"burn_rate":20,"divide_rate":20,"liquidity_rate":10,"min_sharing":100000,"recipient_address":"0xDev..."}'
+```
+
+- `--buy-amt 0.0123` is **already converted to native BNB** from the USDT amount the user wanted (see Quote Token conversion). Do the conversion before building the command.
+- `--gas-price 1000000000` is wei (1 Gwei).
+- In `--fourmeme-rate-conf`, `recipient_rate + burn_rate + divide_rate + liquidity_rate` must sum to **100**.
 
 ## Output Format
 
