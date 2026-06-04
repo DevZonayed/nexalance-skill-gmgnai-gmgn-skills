@@ -41,7 +41,7 @@ export function registerCookingCommands(program: Command): void {
     .option("--max-fee-per-gas <amount>", "Max fee per gas in wei (EVM only)")
     .option("--max-priority-fee-per-gas <amount>", "Max priority fee per gas in wei (EVM only)")
     .option("--anti-mev", "Enable anti-MEV protection (SOL only)")
-    .option("--anti-mev-mode <mode>", "Anti-MEV mode: off / jito / 0slot (SOL only)")
+    .option("--anti-mev-mode <mode>", "Anti-MEV mode: off / normal / secure (SOL only)")
     .option("--raised-token <symbol>", "Raise token symbol: pump→USDC; bonk→USD1; fourmeme→USDT/USD1; leave empty for native")
     .option("--dev-wallet-bps <n>", "Dev wallet fee in basis points (100 = 1%)", parseInt)
     .option("--dev-gas <amount>", "Dev gas amount")

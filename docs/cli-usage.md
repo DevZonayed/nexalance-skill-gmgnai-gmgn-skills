@@ -734,7 +734,7 @@ gmgn-cli cooking create \
   [--website <url>] [--twitter <url>] [--telegram <url>] \
   [--fee <amount>] [--priority-fee <sol>] [--tip-fee <amount>] [--gas-price <amount>] \
   [--max-fee-per-gas <amount>] [--max-priority-fee-per-gas <amount>] \
-  [--anti-mev] [--anti-mev-mode <off|jito|0slot>] \
+  [--anti-mev] [--anti-mev-mode <off|normal|secure>] \
   [--raised-token <symbol>] \
   [--dev-wallet-bps <n>] [--dev-gas <amount>] [--dev-priority <amount>] [--dev-tip <amount>] [--dev-max-fee-per-gas <amount>] \
   [--approve-vision <v1|v2>] [--source <source>] \
@@ -772,7 +772,7 @@ gmgn-cli cooking create \
 | `--max-fee-per-gas` | No | Max fee per gas in wei (**EVM only**) |
 | `--max-priority-fee-per-gas` | No | Max priority fee per gas in wei (**EVM only**) |
 | `--anti-mev` | No | Enable anti-MEV protection (**SOL only**) |
-| `--anti-mev-mode` | No | Anti-MEV mode: `off` / `jito` / `0slot` (**SOL only**) |
+| `--anti-mev-mode` | No | Anti-MEV mode: `off` / `normal` / `secure` (**SOL only**) |
 | `--raised-token` | No | Raise token symbol: `pump`→`USDC`; `bonk`→`USD1`; `fourmeme`→`USDT`/`USD1`; omit for native |
 | `--dev-wallet-bps` | No | Dev wallet fee share in basis points (100 = 1%) |
 | `--dev-gas` | No | Dev gas amount |

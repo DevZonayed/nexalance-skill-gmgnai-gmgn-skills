@@ -161,7 +161,7 @@ gmgn-cli cooking stats [--raw]
 | `--max-fee-per-gas` | No | Max fee per gas in wei (**EVM only**) |
 | `--max-priority-fee-per-gas` | No | Max priority fee per gas in wei (**EVM only**) |
 | `--anti-mev` | No | Enable anti-MEV protection (**SOL only**; rejected on BSC / BASE) |
-| `--anti-mev-mode` | No | Anti-MEV mode: `off` / `jito` / `0slot` (**SOL only**) |
+| `--anti-mev-mode` | No | Anti-MEV mode: `off` / `normal` / `secure` (**SOL only**) |
 | `--raised-token` | No | Raise token symbol. `pump`: `USDC`; `bonk`: `USD1`; `fourmeme`: `USDT` / `USD1`; omit or `""` for native |
 | `--dev-wallet-bps` | No | Dev wallet fee share in basis points (100 = 1%) |
 | `--dev-gas` | No | Dev gas amount |
@@ -342,9 +342,9 @@ These tune the **execution params for the CondMarket buy/sell orders** (bundle b
 | `max_fee_per_gas` | string | EVM EIP-1559; only sent when truthy |
 | `auto_slippage` | bool | Always sent |
 | `is_anti_mev` | bool | Always sent |
-| `anti_mev_mode` | string | `off` / `jito` / `0slot`; always sent |
+| `anti_mev_mode` | string | `off` / `normal` / `secure`; always sent |
 
-Example: `--buy-trade-config '{"slippage":50,"auto_slippage":false,"priority_fee":"0.0005","tip_fee":"0.0001","is_anti_mev":true,"anti_mev_mode":"jito"}'`
+Example: `--buy-trade-config '{"slippage":50,"auto_slippage":false,"priority_fee":"0.0005","tip_fee":"0.0001","is_anti_mev":true,"anti_mev_mode":"secure"}'`
 
 > A standard launch with no `buyConfig` sends `{"is_anti_mev":false,"anti_mev_mode":"off"}` and an empty `buy_wallets` list.
 
@@ -445,7 +445,7 @@ gmgn-cli cooking create \
   --priority-fee 0.0005 \
   --tip-fee 0.0001 \
   --is-buy-back \
-  --buy-trade-config '{"slippage":50,"auto_slippage":false,"priority_fee":"0.0005","tip_fee":"0.0001","is_anti_mev":true,"anti_mev_mode":"jito"}' \
+  --buy-trade-config '{"slippage":50,"auto_slippage":false,"priority_fee":"0.0005","tip_fee":"0.0001","is_anti_mev":true,"anti_mev_mode":"secure"}' \
   --buy-wallets '[{"from_address":"Wallet1...","buy_amt":"0.1"},{"from_address":"Wallet2...","buy_amt":"0.1"}]' \
   --snip-buy-wallets '[{"from_address":"Sniper1...","buy_amt":"0.05"}]' \
   --sell-configs '[{"sell_type":"delay_sell","sell_ratio":"1","wallet_addresses":["Wallet1..."],"delay_mili_sec":5000}]'
