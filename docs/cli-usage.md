@@ -749,7 +749,7 @@ gmgn-cli cooking create \
   [--fourmeme-rate-conf <json>] \
   [--bags-fee-share-list <json>] \
   [--bonk-model <model>] \
-  [--buy-wallets <json>] [--snip-buy-wallets <json>] [--interval-seconds <n>] \
+  [--buy-wallets <json>] [--snip-buy-wallets <json>] \
   [--buy-trade-config <json>] [--sell-trade-config <json>] [--sell-configs <json>] \
   [--raw]
 ```
@@ -795,7 +795,6 @@ gmgn-cli cooking create \
 | `--bonk-model` | No | Bonk model identifier (**bonk DEX only**) |
 | `--buy-wallets` | No | Multi-wallet buy config as JSON array: `[{"from_address":"<addr>","buy_amt":"<n>"}]` |
 | `--snip-buy-wallets` | No | Snipe-buy wallet config as JSON array: `[{"from_address":"<addr>","buy_amt":"<n>"}]` |
-| `--interval-seconds` | No | Interval between multi-wallet buys in seconds |
 | `--buy-trade-config` | No | Buy-side trade config for CondMarket orders as JSON (TradeParam) |
 | `--sell-trade-config` | No | Sell-side trade config for auto-sell / pending_sell as JSON (TradeParam) |
 | `--sell-configs` | No | Auto-sell strategy list as JSON array (CookingSellConfig[]): `[{"sell_type":"delay_sell","delay_sec":<n>,"sell_ratio":"0.5","wallet_addresses":["<addr>"]}]` |

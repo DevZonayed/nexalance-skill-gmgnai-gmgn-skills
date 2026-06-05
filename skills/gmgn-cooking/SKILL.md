@@ -180,7 +180,6 @@ gmgn-cli cooking stats [--raw]
 | `--bonk-model` | No | Bonk model identifier (**bonk DEX only**) |
 | `--buy-wallets` | No | Multi-wallet buy config as JSON array: `[{"from_address":"<addr>","buy_amt":"<n>"}]` |
 | `--snip-buy-wallets` | No | Snipe-buy wallet config as JSON array: `[{"from_address":"<addr>","buy_amt":"<n>"}]` |
-| `--interval-seconds` | No | Interval between multi-wallet buys in seconds |
 | `--buy-trade-config` | No | Buy-side trade config for CondMarket orders as JSON (TradeParam) — see Advanced API Fields |
 | `--sell-trade-config` | No | Sell-side trade config for auto-sell / pending_sell as JSON (TradeParam) — see Advanced API Fields |
 | `--sell-configs` | No | Auto-sell strategy list as JSON array (CookingSellConfig[]) — see Auto-Sell Configuration |
