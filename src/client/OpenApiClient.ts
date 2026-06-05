@@ -150,6 +150,8 @@ export interface StrategyCreateParams {
   custom_rpc?: string;
   condition_orders?: StrategyConditionOrder[];
   quote_investment?: string;
+  sell_param?: TradeParam;
+  buy_param?: TradeParam;
 }
 
 export interface StrategyCancelParams {

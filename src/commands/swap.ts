@@ -224,6 +224,8 @@ export function registerSwapCommands(program: Command): void {
     .option("--max-priority-fee-per-gas <amount>", "EIP-1559 max priority fee per gas (BSC / BASE / ETH)")
     .option("--anti-mev", "Enable anti-MEV protection")
     .option("--condition-orders <json>", "JSON array of condition sub-orders for smart_trade (must include a buy_low entry + TP/SL entries)")
+    .option("--sell-param <json>", "JSON object of sell-side trade params used when a TP/SL condition fires (required for smart_trade)")
+    .option("--buy-param <json>", "JSON object of buy-side trade params override for smart_trade")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
       if (!opts.amountIn && !opts.amountInPercent) {
@@ -264,6 +266,14 @@ export function registerSwapCommands(program: Command): void {
       if (opts.conditionOrders) {
         try { params.condition_orders = JSON.parse(opts.conditionOrders); }
         catch { console.error("[gmgn-cli] --condition-orders must be valid JSON"); process.exit(1); }
+      }
+      if (opts.sellParam) {
+        try { params.sell_param = JSON.parse(opts.sellParam); }
+        catch { console.error("[gmgn-cli] --sell-param must be valid JSON"); process.exit(1); }
+      }
+      if (opts.buyParam) {
+        try { params.buy_param = JSON.parse(opts.buyParam); }
+        catch { console.error("[gmgn-cli] --buy-param must be valid JSON"); process.exit(1); }
       }
       const client = new OpenApiClient(getConfig(true));
       const data = await client.createStrategyOrder(params).catch(exitOnError);
