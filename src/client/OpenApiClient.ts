@@ -314,7 +314,6 @@ export interface CreateTokenParams {
   // Multi-wallet buy
   buy_wallets?: BuyWalletInfo[];
   snip_buy_wallets?: BuyWalletInfo[];
-  interval_seconds?: number;
 }
 
 export class OpenApiClient {
