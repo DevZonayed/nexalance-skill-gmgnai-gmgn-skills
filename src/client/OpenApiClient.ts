@@ -435,6 +435,14 @@ export class OpenApiClient {
     return this.authSignedRequest("GET", "/v1/trade/follow_wallet", { chain, ...extra }, null);
   }
 
+  async getFollowTokens(chain: string, walletAddress: string, extra: Record<string, string | number> = {}): Promise<unknown> {
+    return this.authExistRequest("GET", "/v1/user/follow_tokens", { chain, wallet_address: walletAddress, ...extra });
+  }
+
+  async getFollowGroupNames(chain: string, walletAddress: string): Promise<unknown> {
+    return this.authExistRequest("GET", "/v1/user/follow_token_groups", { chain, wallet_address: walletAddress });
+  }
+
   async getKol(chain?: string, limit?: number): Promise<unknown> {
     const query: Record<string, string | number> = {};
     if (chain) query["chain"] = chain;
