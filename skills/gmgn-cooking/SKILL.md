@@ -262,23 +262,25 @@ Example: `--pump-fee-share-list '[{"provider":"twitter","username":"handle","bas
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `beneficiary` | string | Yes | Fee recipient address |
-| `tax_rate` | int | Conditional | V5 unified tax rate in bps, e.g. 5% → `500` |
-| `buy_tax_rate` | int | Conditional | V6 separate buy tax rate in bps |
+| `buy_tax_rate` | int | Conditional | V6 separate buy tax rate in bps, e.g. 1% → `100`. Use together with `sell_tax_rate`. |
 | `sell_tax_rate` | int | Conditional | V6 separate sell tax rate in bps |
-| `mkt_bps` | int | Yes | Marketing / donation fund share |
+| `tax_rate` | int | Conditional | V5 unified tax rate in bps, e.g. 5% → `500`. Use instead of `buy_tax_rate` + `sell_tax_rate`. |
+| `mkt_bps` | int | Yes | **Tax recipient share** — the slice of the collected tax routed to the recipient(s): the X handle when `recipient_type = gift`, or the `split_conf` addresses when `recipient_type = split`. This is NOT a generic "marketing" fund. |
 | `deflation_bps` | int | Yes | Burn (supply-reduction) share |
 | `dividend_bps` | int | Yes | Dividend (holder-reward) share |
 | `lp_bps` | int | Yes | Liquidity share |
+| `recipient_type` | string | Yes | `gift` (route the recipient share to an X handle) / `split` (route it to specific addresses) |
+| `twitter_account` | string | Conditional | X / Twitter handle that receives the recipient share — **required when `recipient_type = gift`**; leave `""` when `split`. |
+| `split_conf` | array | Conditional | Recipient address split list — **required when `recipient_type = split`**; leave `[]` when `gift`. |
 | `minimum_share_balance` | int | Yes | Min holding to qualify for dividends — minimum **10000** tokens |
-| `recipient_type` | string | Yes | `split` (proportional) / `gift` |
-| `twitter_account` | string | Yes | Twitter username |
-| `split_conf` | array | Yes | Split list — see below |
+| `beneficiary` | string | No | Legacy single fee-recipient address. Omit when using `recipient_type` + `twitter_account` / `split_conf`. |
 
 `split_conf` entries: `{ "recipient": "<address>", "bps": <n> }` — all `bps` must sum to **10000**.
 
+> - **Tax distribution:** whenever the tax rate > 0, `mkt_bps + deflation_bps + dividend_bps + lp_bps` must sum to **10000**. `mkt_bps` is the recipient's cut; the other three are burn / dividend / liquidity.
+> - **Recipient routing:** set `recipient_type = gift` + `twitter_account` to send the recipient cut to an X handle, OR `recipient_type = split` + `split_conf` to send it to one or more addresses. Fill only the field that matches the chosen mode; leave the other empty (`""` / `[]`).
 > - Use `tax_rate` for V5 (unified rate); use `buy_tax_rate` + `sell_tax_rate` for V6 (separate rates).
-> - When the tax rate > 0: `mkt_bps + deflation_bps + dividend_bps + lp_bps` must sum to **10000**. When `lp_bps > 0`: `minimum_share_balance` must be > 0.
+> - When `lp_bps > 0`: `minimum_share_balance` must be > 0.
 
 ### FourMeme (`--dex fourmeme`)
 
@@ -372,6 +374,8 @@ Token creation is **asynchronous**. If the initial `cooking create` response sho
 
 ## Usage Examples
 
+Examples run shortest-first: basic single-launch commands, then full end-to-end configurations. Every JSON flag below is a valid payload shape — copy and adapt.
+
 ```bash
 # Get token creation statistics per launchpad
 gmgn-cli cooking stats
@@ -425,9 +429,7 @@ gmgn-cli cooking create \
   --sell-configs '[{"sell_type":"delay_sell","delay_sec":60,"sell_ratio":"0.5","wallet_addresses":["<wallet_address>"]}]'
 ```
 
-### Full worked examples
-
-These mirror real launch configurations end-to-end. Copy and adapt — every JSON flag below is a valid payload shape.
+These mirror real launch configurations end-to-end.
 
 **Pump.fun (SOL) — Bundle + Sniper + Auto-Sell + Agent Auto Buyback**
 
@@ -475,6 +477,50 @@ gmgn-cli cooking create \
 - `--buy-amt 0.0123` is **already converted to native BNB** from the USDT amount the user wanted (see Quote Token conversion). Do the conversion before building the command.
 - `--gas-price 1000000000` is wei (1 Gwei).
 - In `--fourmeme-rate-conf`, `recipient_rate + burn_rate + divide_rate + liquidity_rate` must sum to **100**.
+
+**Flap (BSC) — `split` mode: route the recipient cut to a BSC address**
+
+```bash
+gmgn-cli cooking create \
+  --chain bsc \
+  --dex flap \
+  --from 0x1f8d977b6843e1bbcb306c4a3664c9fb0277979d \
+  --name "refer" \
+  --symbol refer \
+  --buy-amt 2 \
+  --image-url https://gmgn.ai/external-res-va/11ad7747dcefcfaae87d3f53a4d7330d_v2l.webp \
+  --website https://www.refercoins.bond/ \
+  --twitter https://x.com/referdotfun \
+  --dev-gas 50000000 \
+  --auto-slippage \
+  --flap-rate-conf '{"buy_tax_rate":100,"sell_tax_rate":100,"mkt_bps":10000,"deflation_bps":0,"dividend_bps":0,"lp_bps":0,"minimum_share_balance":10000,"recipient_type":"split","twitter_account":"","split_conf":[{"recipient":"0x1f8d977b6843e1bbcb306c4a3664c9fb0277979d","bps":10000}]}'
+```
+
+- `recipient_type: split` → the recipient cut goes to `split_conf` addresses; `twitter_account` is left `""`.
+- `mkt_bps:10000` means the **entire** tax (1% buy / 1% sell) goes to the recipient — `deflation_bps + dividend_bps + lp_bps` are all `0`, and the four still sum to **10000**.
+- `split_conf` has one address taking all `10000` bps (100%). Multiple addresses are allowed as long as their `bps` sum to `10000`.
+
+**Flap (BSC) — `gift` mode: route the recipient cut to an X handle, split the rest across burn / dividend / LP**
+
+```bash
+gmgn-cli cooking create \
+  --chain bsc \
+  --dex flap \
+  --from 0x1f8d977b6843e1bbcb306c4a3664c9fb0277979d \
+  --name "refer" \
+  --symbol refer \
+  --buy-amt 2 \
+  --image-url https://gmgn.ai/external-res-va/11ad7747dcefcfaae87d3f53a4d7330d_v2l.webp \
+  --website https://www.refercoins.bond/ \
+  --twitter https://x.com/referdotfun \
+  --dev-gas 50000000 \
+  --auto-slippage \
+  --flap-rate-conf '{"buy_tax_rate":100,"sell_tax_rate":100,"mkt_bps":5000,"deflation_bps":2700,"dividend_bps":1800,"lp_bps":500,"minimum_share_balance":10000,"recipient_type":"gift","twitter_account":"handleName","split_conf":[]}'
+```
+
+- `recipient_type: gift` → the recipient cut goes to the `twitter_account` X handle; `split_conf` is left `[]`.
+- Tax distribution: `mkt_bps:5000` (50% to the handle) + `deflation_bps:2700` (27% burn) + `dividend_bps:1800` (18% dividend) + `lp_bps:500` (5% LP) = **10000**.
+- `lp_bps > 0`, so `minimum_share_balance` must be > 0 (`10000` here).
 
 ## Output Format
 
